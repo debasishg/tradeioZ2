@@ -30,7 +30,7 @@ object config {
 
   object DbConfigProvider {
 
-    val fromConfig: ZLayer[Config, Nothing, DBConfig] = 
+    val fromConfig: ZLayer[Config, Nothing, DBConfig] =
       ZLayer.fromFunction(_.get[Config].dbConfig)
   }
 
