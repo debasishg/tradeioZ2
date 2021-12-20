@@ -33,3 +33,26 @@ trait TradeRepository {
   /** store many trades */
   def storeNTrades(trades: NonEmptyList[Trade]): Task[Unit]
 }
+
+object TradeRepository {
+  def queryTradeByAccountNo(accountNo: AccountNo, date: LocalDate): RIO[TradeRepository, List[Trade]] =
+    ZIO.serviceWithZIO(_.queryTradeByAccountNo(accountNo, date))
+
+  def queryTradeByMarket(market: Market): RIO[TradeRepository, List[Trade]] =
+    ZIO.serviceWithZIO(_.queryTradeByMarket(market))
+
+  def queryTradesByISINCodes(
+      forDate: LocalDate,
+      forIsins: Set[ISINCode]
+  ): RIO[TradeRepository, List[Trade]] =
+    ZIO.serviceWithZIO(_.queryTradesByISINCodes(forDate, forIsins))
+
+  def allTrades: RIO[TradeRepository, List[Trade]] =
+    ZIO.serviceWithZIO(_.allTrades)
+
+  def store(trd: Trade): RIO[TradeRepository, Trade] =
+    ZIO.serviceWithZIO(_.store(trd))
+
+  def storeNTrades(trades: NonEmptyList[Trade]): RIO[TradeRepository, Unit] =
+    ZIO.serviceWithZIO(_.storeNTrades(trades))
+}

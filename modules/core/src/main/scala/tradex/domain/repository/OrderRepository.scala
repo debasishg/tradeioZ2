@@ -20,3 +20,17 @@ trait OrderRepository {
   /** store many orders */
   def store(orders: NonEmptyList[Order]): Task[Unit]
 }
+
+object OrderRepository {
+  def queryByOrderNo(no: OrderNo): RIO[OrderRepository, Option[Order]] =
+    ZIO.serviceWithZIO(_.queryByOrderNo(no))
+
+  def queryByOrderDate(date: LocalDate): RIO[OrderRepository, List[Order]] =
+    ZIO.serviceWithZIO(_.queryByOrderDate(date))
+
+  def store(ord: Order): RIO[OrderRepository, Order] =
+    ZIO.serviceWithZIO(_.store(ord))
+
+  def store(orders: NonEmptyList[Order]): RIO[OrderRepository, Unit] =
+    ZIO.serviceWithZIO(_.store(orders))
+}

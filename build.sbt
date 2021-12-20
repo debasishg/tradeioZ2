@@ -7,7 +7,7 @@ ThisBuild / evictionErrorLevel := Level.Warn
 ThisBuild / scalafixDependencies += Dependencies.organizeImports
 
 resolvers += Resolver.sonatypeRepo("snapshots")
-val scalafixCommonSettings = inConfig(IntegrationTest)(scalafixConfigSettings(IntegrationTest))
+// val scalafixCommonSettings = inConfig(IntegrationTest)(scalafixConfigSettings(IntegrationTest))
 
 lazy val root = (project in file("."))
   .settings(
@@ -16,20 +16,20 @@ lazy val root = (project in file("."))
   .aggregate(core, tests)
 
 lazy val core = (project in file("modules/core")).settings(
-  name := "tradeio-core",
+  name := "tradeioz2-core",
   commonSettings,
   consoleSettings,
   dependencies
 )
 
 lazy val tests = (project in file("modules/tests"))
-  .configs(IntegrationTest)
+  // .configs(IntegrationTest)
   .settings(
     name := "tradeioz2-test-suite",
     commonSettings,
     testFrameworks := Seq(new TestFramework("zio.test.sbt.ZTestFramework")),
     Defaults.itSettings,
-    scalafixCommonSettings,
+    // scalafixCommonSettings,
     testDependencies
   )
   .dependsOn(core)

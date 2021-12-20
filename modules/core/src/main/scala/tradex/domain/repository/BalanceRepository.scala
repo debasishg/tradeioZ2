@@ -21,3 +21,17 @@ trait BalanceRepository {
   /** all balances */
   def allBalances: Task[List[Balance]]
 }
+
+object BalanceRepository {
+  def queryBalanceByAccountNo(no: AccountNo): RIO[BalanceRepository, Option[Balance]] =
+    ZIO.serviceWithZIO(_.queryBalanceByAccountNo(no))
+
+  def store(b: Balance): RIO[BalanceRepository, Balance] =
+    ZIO.serviceWithZIO(_.store(b))
+
+  def queryBalanceAsOf(date: LocalDate): RIO[BalanceRepository, List[Balance]] =
+    ZIO.serviceWithZIO(_.queryBalanceAsOf(date))
+
+  def allBalances: RIO[BalanceRepository, List[Balance]] =
+    ZIO.serviceWithZIO(_.allBalances)
+}

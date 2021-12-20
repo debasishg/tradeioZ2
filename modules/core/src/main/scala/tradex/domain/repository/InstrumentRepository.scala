@@ -15,3 +15,14 @@ trait InstrumentRepository {
   /** store */
   def store(ins: Instrument): Task[Instrument]
 }
+
+object InstrumentRepository {
+  def queryByISINCode(isin: ISINCode): RIO[InstrumentRepository, Option[Instrument]] =
+    ZIO.serviceWithZIO(_.queryByISINCode(isin))
+
+  def queryByInstrumentType(instrumentType: InstrumentType): RIO[InstrumentRepository, List[Instrument]] =
+    ZIO.serviceWithZIO(_.queryByInstrumentType(instrumentType))
+
+  def store(ins: Instrument): RIO[InstrumentRepository, Instrument] =
+    ZIO.serviceWithZIO(_.store(ins))
+}
