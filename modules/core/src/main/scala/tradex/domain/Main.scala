@@ -13,9 +13,7 @@ import model.trade._
 import model.user._
 import model.balance._
 import model.instrument._
-import zio.query.DataSource
-import zio.query.Request
-import zio.query.ZQuery
+import zio.query.{ DataSource, Request, ZQuery }
 
 object Main extends zio.ZIOApp {
   override type Environment = TradingService with AccountingService
