@@ -35,7 +35,7 @@ object Versions {
   val zioInteropCatsVersion   = "3.3.0-RC1"
   val enumeratumDoobieVersion = "1.7.0"
   val flywayDbVersion         = "8.0.3"
-  val zioStreamsVersion       = "1.0.13"
+  val zioStreamsVersion       = "2.0.0-RC1"
   val zioKafkaVersion         = "0.17.3"
   val zioJsonVersion          = "0.1.5"
   val zioQueryVersion         = "0.2.10"
