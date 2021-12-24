@@ -69,4 +69,3 @@ lazy val dependencies =
 
 lazy val testDependencies =
   libraryDependencies ++= Dependencies.testDependencies
-
