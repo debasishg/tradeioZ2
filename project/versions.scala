@@ -7,7 +7,7 @@ object Versions {
   val scalaVersion            = "2.13.7"
   val silencerVersion         = "1.4.4"
   val log4j2Version           = "2.13.1"
-  val pureconfigVersion       = "0.17.0"
+  val pureconfigVersion       = "0.17.1"
   val doobieVersion           = "1.0.0-RC1"
   val newtypeVersion          = "0.4.4"
   val refinedVersion          = "0.9.27"
