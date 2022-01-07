@@ -11,20 +11,20 @@ import model.user._
 import model.balance._
 
 object Main extends ZIOApp {
-  override type Environment = TradingService with AccountingService
+  override type Environment = config.Config with TradingService with AccountingService
 
   override implicit def tag: Tag[Environment] = Tag[Environment]
 
   override def layer: ZLayer[ZIOAppArgs, Any, Environment] = Application.prod.appLayer
 
-  override def run = {
+  override def run: ZIO[config.Config with TradingService, Throwable, Unit] = {
     val setupDB: ZIO[config.Config, Throwable, Unit] = for {
       dbConf <- config.getDbConfig
       _      <- FlywayMigration.migrate(dbConf)
     } yield ()
 
-    setupDB *> ZIO.serviceWithZIO[TradingService](
-      _.getAccountsOpenedOn(LocalDate.EPOCH).map(_.foreach(println))
+    ZIO.serviceWithZIO[config.Config with TradingService](service =>
+      setupDB *> service.getAccountsOpenedOn(LocalDate.EPOCH).map(_.foreach(println))
     )
   }
 }

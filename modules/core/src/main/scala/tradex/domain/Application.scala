@@ -32,7 +32,7 @@ object Application {
       TradingServiceLive.layer ++ AccountingServiceLive.layer
 
     // final application layer for prod
-    val appLayer: ZLayer[Any, Throwable, AppEnv] =
+    val appLayer = // : ZLayer[Any, Throwable, AppEnv] =
       configLayer >+>
         repositoryLayer >+>
         serviceLayer
