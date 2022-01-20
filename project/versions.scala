@@ -28,7 +28,7 @@ object Versions {
   val organizeImportsVersion  = "0.6.0"
   val weaverVersion           = "0.7.7"
   val betterMonadicForVersion = "0.3.1"
-  val semanticDBVersion       = "4.4.32"
+  val semanticDBVersion       = "4.4.33"
   val zioVersion              = "2.0.0-RC1"
   val zioPreludeVersion       = "1.0.0-RC9"
   val zioConfigVersion        = "1.0.10"
