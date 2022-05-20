@@ -20,7 +20,7 @@ object Versions {
   val logbackVersion          = "1.2.10"
   val monocleVersion          = "3.1.0"
   val derevoVersion           = "0.13.0"
-  val circeVersion            = "0.14.1"
+  val circeVersion            = "0.14.2"
   val http4sVersion           = "1.0.0-M23"
   val http4sJwtAuthVersion    = "1.0.0"
   val javaxCryptoVersion      = "1.0.1"
