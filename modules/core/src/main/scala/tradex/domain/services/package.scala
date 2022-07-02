@@ -23,7 +23,7 @@ package object services {
     // the whole idea of using the `DataSource` is to abstract the batching
     // part and introduce some parallelism in the computation
     val ds: DataSource[TradingService, GetTradesByInstruments] =
-      DataSource.fromFunctionBatchedM(
+      DataSource.fromFunctionBatchedZIO(
         "TradesByInstruments"
       )(requests =>
         ZIO
