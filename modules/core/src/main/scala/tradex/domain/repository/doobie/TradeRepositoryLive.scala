@@ -21,9 +21,10 @@ import model.trade._
 import model.market._
 import codecs._
 import repository.TradeRepository
-import config._
+import tradex.domain.config._
+import cats.effect.kernel.Resource
 
-final case class TradeRepositoryLive(xa: Transactor[Task]) extends TradeRepository {
+final case class TradeRepositoryLive(xaResource: Resource[Task, Transactor[Task]]) extends TradeRepository {
   import TradeRepositoryLive.SQL
 
   implicit val TradeAssociative: Associative[Trade] =
@@ -33,30 +34,34 @@ final case class TradeRepositoryLive(xa: Transactor[Task]) extends TradeReposito
     }
 
   def queryTradeByAccountNo(accountNo: AccountNo, date: LocalDate): Task[List[Trade]] =
-    SQL
-      .getTradesByAccountNo(accountNo.value.value, date)
-      .to[List]
-      .map(_.groupBy(_.tradeRefNo))
-      .map {
-        _.map { case (refNo, lis) =>
-          lis.reduce((t1, t2) => Associative[Trade].combine(t1, t2)).copy(tradeRefNo = refNo)
-        }.toList
-      }
-      .transact(xa)
-      .orDie
+    xaResource.use { xa =>
+      SQL
+        .getTradesByAccountNo(accountNo.value.value, date)
+        .to[List]
+        .map(_.groupBy(_.tradeRefNo))
+        .map {
+          _.map { case (refNo, lis) =>
+            lis.reduce((t1, t2) => Associative[Trade].combine(t1, t2)).copy(tradeRefNo = refNo)
+          }.toList
+        }
+        .transact(xa)
+        .orDie
+    }
 
   def queryTradeByMarket(market: Market): Task[List[Trade]] =
-    SQL
-      .getTradesByMarket(market.entryName)
-      .to[List]
-      .map(_.groupBy(_.tradeRefNo))
-      .map {
-        _.map { case (refNo, lis) =>
-          lis.reduce((t1, t2) => Associative[Trade].combine(t1, t2)).copy(tradeRefNo = refNo)
-        }.toList
-      }
-      .transact(xa)
-      .orDie
+    xaResource.use { xa =>
+      SQL
+        .getTradesByMarket(market.entryName)
+        .to[List]
+        .map(_.groupBy(_.tradeRefNo))
+        .map {
+          _.map { case (refNo, lis) =>
+            lis.reduce((t1, t2) => Associative[Trade].combine(t1, t2)).copy(tradeRefNo = refNo)
+          }.toList
+        }
+        .transact(xa)
+        .orDie
+    }
 
   def queryTradesByISINCodes(
       forDate: LocalDate,
@@ -64,23 +69,27 @@ final case class TradeRepositoryLive(xa: Transactor[Task]) extends TradeReposito
   ): Task[List[Trade]] = ???
 
   def allTrades: Task[List[Trade]] =
-    SQL.getAllTrades
-      .to[List]
-      .map(_.groupBy(_.tradeRefNo))
-      .map {
-        _.map { case (refNo, lis) =>
-          lis.reduce((t1, t2) => Associative[Trade].combine(t1, t2)).copy(tradeRefNo = refNo)
-        }.toList
-      }
-      .transact(xa)
-      .orDie
+    xaResource.use { xa =>
+      SQL.getAllTrades
+        .to[List]
+        .map(_.groupBy(_.tradeRefNo))
+        .map {
+          _.map { case (refNo, lis) =>
+            lis.reduce((t1, t2) => Associative[Trade].combine(t1, t2)).copy(tradeRefNo = refNo)
+          }.toList
+        }
+        .transact(xa)
+        .orDie
+    }
 
   def store(trd: Trade): Task[Trade] =
-    SQL
-      .insertTrade(trd)
-      .transact(xa)
-      .map(_ => trd)
-      .orDie
+    xaResource.use { xa =>
+      SQL
+        .insertTrade(trd)
+        .transact(xa)
+        .map(_ => trd)
+        .orDie
+    }
 
   def storeNTrades(trades: NonEmptyList[Trade]): Task[Unit] =
     trades.forEach(trade => store(trade)).map(_ => ())
@@ -88,10 +97,11 @@ final case class TradeRepositoryLive(xa: Transactor[Task]) extends TradeReposito
 
 object TradeRepositoryLive extends CatzInterop {
   val layer: ZLayer[DBConfig, Throwable, TradeRepository] = {
-    (for {
-      cfg        <- ZIO.environmentWith[DBConfig](_.get).toManaged
-      transactor <- mkTransactor(cfg)
-    } yield new TradeRepositoryLive(transactor)).toLayer
+    ZLayer
+      .scoped(for {
+        cfg        <- ZIO.service[DBConfig]
+        transactor <- mkTransactor(cfg)
+      } yield new TradeRepositoryLive(transactor))
   }
 
   object SQL {

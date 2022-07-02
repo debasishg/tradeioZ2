@@ -44,5 +44,7 @@ final case class TradeRepositoryInMemory(state: Ref[Map[TradeReferenceNo, Trade]
 
 object TradeRepositoryInMemory {
   val layer: ULayer[TradeRepository] =
-    Ref.make(Map.empty[TradeReferenceNo, Trade]).map(r => TradeRepositoryInMemory(r)).toLayer
+    ZLayer(
+      Ref.make(Map.empty[TradeReferenceNo, Trade]).map(r => TradeRepositoryInMemory(r))
+    )
 }

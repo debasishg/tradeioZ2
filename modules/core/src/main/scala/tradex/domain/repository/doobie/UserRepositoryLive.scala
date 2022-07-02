@@ -10,33 +10,39 @@ import doobie.util.transactor.Transactor
 import doobie.postgres.implicits._
 import model.user._
 import codecs._
-import config._
+import tradex.domain.config._
 import repository.UserRepository
+import cats.effect.kernel.Resource
 
-final case class UserRepositoryLive(xa: Transactor[Task]) extends UserRepository {
+final case class UserRepositoryLive(xaResource: Resource[Task, Transactor[Task]]) extends UserRepository {
   import UserRepositoryLive.SQL
 
   def queryByUserName(username: UserName): Task[Option[User]] =
-    SQL
-      .getByUserName(username.value.value)
-      .option
-      .transact(xa)
-      .orDie
+    xaResource.use { xa =>
+      SQL
+        .getByUserName(username.value.value)
+        .option
+        .transact(xa)
+        .orDie
+    }
 
   def store(username: UserName, password: EncryptedPassword): Task[UserId] =
-    SQL
-      .insert(username, password)
-      .transact(xa)
-      .map(_.userId)
-      .orDie
+    xaResource.use { xa =>
+      SQL
+        .insert(username, password)
+        .transact(xa)
+        .map(_.userId)
+        .orDie
+    }
 }
 
 object UserRepositoryLive extends CatzInterop {
   val layer: ZLayer[DBConfig, Throwable, UserRepository] = {
-    (for {
-      cfg        <- ZIO.environmentWith[DBConfig](_.get).toManaged
-      transactor <- mkTransactor(cfg)
-    } yield new UserRepositoryLive(transactor)).toLayer
+    ZLayer
+      .scoped(for {
+        cfg        <- ZIO.service[DBConfig]
+        transactor <- mkTransactor(cfg)
+      } yield new UserRepositoryLive(transactor))
   }
 
   object SQL {

@@ -11,14 +11,15 @@ import doobie.implicits._
 import doobie.util.transactor.Transactor
 import doobie.postgres.implicits._
 
-import config._
+import tradex.domain.config._
 import codecs._
 import model.account._
 import model.order._
 import model.instrument._
 import repository.OrderRepository
+import cats.effect.kernel.Resource
 
-final case class OrderRepositoryLive(xa: Transactor[Task]) extends OrderRepository {
+final case class OrderRepositoryLive(xaResource: Resource[Task, Transactor[Task]]) extends OrderRepository {
   import OrderRepositoryLive.SQL
 
   implicit val OrderAssociative: Associative[Order] =
@@ -28,43 +29,49 @@ final case class OrderRepositoryLive(xa: Transactor[Task]) extends OrderReposito
     }
 
   def queryByOrderNo(no: OrderNo): Task[Option[Order]] = {
-    SQL
-      .getByOrderNo(no.value.value)
-      .to[List]
-      .map(_.groupBy(_.no))
-      .map {
-        _.map { case (_, lis) =>
-          lis.reduce((o1, o2) => Associative[Order].combine(o1, o2))
-        }.headOption
-      }
-      .transact(xa)
-      .orDie
+    xaResource.use { xa =>
+      SQL
+        .getByOrderNo(no.value.value)
+        .to[List]
+        .map(_.groupBy(_.no))
+        .map {
+          _.map { case (_, lis) =>
+            lis.reduce((o1, o2) => Associative[Order].combine(o1, o2))
+          }.headOption
+        }
+        .transact(xa)
+        .orDie
+    }
   }
 
   def queryByOrderDate(date: LocalDate): Task[List[Order]] = {
-    SQL
-      .getByOrderDate(date)
-      .to[List]
-      .map(_.groupBy(_.no))
-      .map {
-        _.map { case (_, lis) =>
-          lis.reduce((o1, o2) => Associative[Order].combine(o1, o2))
-        }.toList
-      }
-      .transact(xa)
-      .orDie
+    xaResource.use { xa =>
+      SQL
+        .getByOrderDate(date)
+        .to[List]
+        .map(_.groupBy(_.no))
+        .map {
+          _.map { case (_, lis) =>
+            lis.reduce((o1, o2) => Associative[Order].combine(o1, o2))
+          }.toList
+        }
+        .transact(xa)
+        .orDie
+    }
   }
 
   def store(ord: Order): Task[Order] = {
-    val res = for {
-      _ <- SQL.deleteLineItems(ord.no.value.value).run
-      _ <- SQL.upsertOrder(ord).run
-      l <- SQL.insertLineItems(ord.items.toList)
-    } yield l
-    res
-      .transact(xa)
-      .map(_ => ord)
-      .orDie
+    xaResource.use { xa =>
+      val res = for {
+        _ <- SQL.deleteLineItems(ord.no.value.value).run
+        _ <- SQL.upsertOrder(ord).run
+        l <- SQL.insertLineItems(ord.items.toList)
+      } yield l
+      res
+        .transact(xa)
+        .map(_ => ord)
+        .orDie
+    }
   }
 
   def store(orders: NonEmptyList[Order]): Task[Unit] =
@@ -73,10 +80,11 @@ final case class OrderRepositoryLive(xa: Transactor[Task]) extends OrderReposito
 
 object OrderRepositoryLive extends CatzInterop {
   val layer: ZLayer[DBConfig, Throwable, OrderRepository] = {
-    (for {
-      cfg        <- ZIO.environmentWith[DBConfig](_.get).toManaged
-      transactor <- mkTransactor(cfg)
-    } yield new OrderRepositoryLive(transactor)).toLayer
+    ZLayer
+      .scoped(for {
+        cfg        <- ZIO.service[DBConfig]
+        transactor <- mkTransactor(cfg)
+      } yield new OrderRepositoryLive(transactor))
   }
 
   object SQL {

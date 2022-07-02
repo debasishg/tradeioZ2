@@ -11,42 +11,50 @@ import doobie.util.transactor.Transactor
 import doobie.postgres.implicits._
 import model.instrument._
 import model.order._
-import config._
+import tradex.domain.config._
 import codecs._
 import repository.InstrumentRepository
+import cats.effect.kernel.Resource
 
-final case class InstrumentRepositoryLive(xa: Transactor[Task]) extends InstrumentRepository {
+final case class InstrumentRepositoryLive(xaResource: Resource[Task, Transactor[Task]]) extends InstrumentRepository {
   import InstrumentRepositoryLive.SQL
 
   def queryByISINCode(isin: ISINCode): Task[Option[Instrument]] =
-    SQL
-      .get(isin.value.value)
-      .option
-      .transact(xa)
-      .orDie
+    xaResource.use { xa =>
+      SQL
+        .get(isin.value.value)
+        .option
+        .transact(xa)
+        .orDie
+    }
 
   def queryByInstrumentType(instrumentType: InstrumentType): Task[List[Instrument]] =
-    SQL
-      .getByType(instrumentType.entryName)
-      .to[List]
-      .transact(xa)
-      .orDie
+    xaResource.use { xa =>
+      SQL
+        .getByType(instrumentType.entryName)
+        .to[List]
+        .transact(xa)
+        .orDie
+    }
 
   def store(ins: Instrument): Task[Instrument] =
-    SQL
-      .upsert(ins)
-      .run
-      .transact(xa)
-      .map(_ => ins)
-      .orDie
+    xaResource.use { xa =>
+      SQL
+        .upsert(ins)
+        .run
+        .transact(xa)
+        .map(_ => ins)
+        .orDie
+    }
 }
 
 object InstrumentRepositoryLive extends CatzInterop {
   val layer: ZLayer[DBConfig, Throwable, InstrumentRepository] = {
-    (for {
-      cfg        <- ZIO.environmentWith[DBConfig](_.get).toManaged
-      transactor <- mkTransactor(cfg)
-    } yield new InstrumentRepositoryLive(transactor)).toLayer
+    ZLayer
+      .scoped(for {
+        cfg        <- ZIO.service[DBConfig]
+        transactor <- mkTransactor(cfg)
+      } yield new InstrumentRepositoryLive(transactor))
   }
 
   object SQL {

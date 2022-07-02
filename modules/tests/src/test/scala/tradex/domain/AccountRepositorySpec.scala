@@ -7,33 +7,39 @@ import generators._
 import model.account._
 import repository.AccountRepository
 import repository.inmemory.AccountRepositoryInMemory
+import zio.ZIO
 
-object AccountRepositorySpec extends DefaultRunnableSpec {
+object AccountRepositorySpec extends ZIOSpecDefault {
+  val testLayer = AccountRepositoryInMemory.layer ++ TestRandom.deterministic ++ Sized.default ++ TestConfig.default
+
   val spec = suite("AccountRepository")(
     test("successfully stores an account") {
       check(accountGen) { account =>
         for {
-          stored <- AccountRepository.store(account)
+          repo   <- ZIO.service[AccountRepository]
+          stored <- repo.store(account)
         } yield assert(stored.accountType)(
           isOneOf(AccountType.values)
         )
       }
-    }.provideCustomLayer(AccountRepositoryInMemory.layer),
+    }.provide(testLayer),
     test("successfully stores an account and fetch the same") {
       check(accountGen) { account =>
         for {
-          stored  <- AccountRepository.store(account)
-          fetched <- AccountRepository.queryByAccountNo(stored.no)
+          repo    <- ZIO.service[AccountRepository]
+          stored  <- repo.store(account)
+          fetched <- repo.queryByAccountNo(stored.no)
         } yield assertTrue(stored.no == fetched.get.no)
       }
-    }.provideCustomLayer(AccountRepositoryInMemory.layer),
+    }.provide(testLayer),
     test("successfully stores multiple accounts") {
       check(Gen.listOfN(5)(accountWithNamePatternGen("debasish"))) { accounts =>
         for {
-          _           <- AccountRepository.store(accounts)
-          allAccounts <- AccountRepository.all
+          repo        <- ZIO.service[AccountRepository]
+          _           <- repo.store(accounts)
+          allAccounts <- repo.all
         } yield assertTrue(allAccounts.forall(_.name.value.value.startsWith("debasish")))
       }
-    }.provideCustomLayer(AccountRepositoryInMemory.layer)
+    }.provide(testLayer)
   )
 }

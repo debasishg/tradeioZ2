@@ -22,7 +22,7 @@ final case class AccountingServiceLive(br: BalanceRepository) extends Accounting
             )
           } yield balance
         }
-        .getOrElse(IO.fail(AccountingError(s"No net amount to post for $trade")))
+        .getOrElse(ZIO.fail(AccountingError(s"No net amount to post for $trade")))
     )
   }
 
@@ -37,14 +37,14 @@ final case class AccountingServiceLive(br: BalanceRepository) extends Accounting
 
   private def withAccountingService[A](t: Task[A]): IO[AccountingError, A] =
     t.foldZIO(
-      error => IO.fail(AccountingError(error.getMessage)),
-      success => IO.succeed(success)
+      error => ZIO.fail(AccountingError(error.getMessage)),
+      success => ZIO.succeed(success)
     )
 }
 
 object AccountingServiceLive {
 
   val layer: ZLayer[BalanceRepository, Throwable, AccountingService] = {
-    (AccountingServiceLive(_)).toLayer
+    ZLayer.fromFunction(AccountingServiceLive(_))
   }
 }

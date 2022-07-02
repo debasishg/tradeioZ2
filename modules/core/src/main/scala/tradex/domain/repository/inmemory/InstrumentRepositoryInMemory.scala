@@ -17,5 +17,7 @@ final case class InstrumentRepositoryInMemory(state: Ref[Map[ISINCode, Instrumen
 
 object InstrumentRepositoryInMemory {
   val layer: ULayer[InstrumentRepository] =
-    Ref.make(Map.empty[ISINCode, Instrument]).map(r => InstrumentRepositoryInMemory(r)).toLayer
+    ZLayer(
+      Ref.make(Map.empty[ISINCode, Instrument]).map(r => InstrumentRepositoryInMemory(r))
+    )
 }

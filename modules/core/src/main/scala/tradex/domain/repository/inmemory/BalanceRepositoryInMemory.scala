@@ -21,5 +21,7 @@ final case class BalanceRepositoryInMemory(state: Ref[Map[AccountNo, Balance]]) 
 
 object BalanceRepositoryInMemory {
   val layer: ULayer[BalanceRepository] =
-    Ref.make(Map.empty[AccountNo, Balance]).map(r => BalanceRepositoryInMemory(r)).toLayer
+    ZLayer.scoped(
+      Ref.make(Map.empty[AccountNo, Balance]).map(r => BalanceRepositoryInMemory(r))
+    )
 }

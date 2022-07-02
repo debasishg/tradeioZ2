@@ -17,8 +17,10 @@ import io.circe._
 import io.circe.generic.auto._
 import io.circe.syntax._
 
-object TradingServiceSpec extends DefaultRunnableSpec {
+object TradingServiceSpec extends ZIOSpecDefault {
   val localDateZERO = LocalDateTime.ofEpochSecond(0, 0, ZoneOffset.UTC)
+  val testLayer     = TradingServiceTest.layer ++ TestRandom.deterministic ++ Sized.default ++ TestConfig.default
+
   val spec = suite("Trading Service")(
     test("successfully invoke getAccountsOpenedOn") {
       check(Gen.listOfN(5)(accountGen)) { accounts =>
@@ -26,26 +28,30 @@ object TradingServiceSpec extends DefaultRunnableSpec {
           _   <- TestClock.adjust(1.day)
           now <- zio.Clock.instant
           dt = LocalDateTime.ofInstant(now, ZoneOffset.UTC)
-          _ <- AccountRepository.store(
+          repo <- ZIO.service[AccountRepository]
+          _ <- repo.store(
             accounts.map(_.copy(dateOfOpen = dt))
           )
-          fetched <- TradingService.getAccountsOpenedOn(dt.toLocalDate())
+          trading <- ZIO.service[TradingService]
+          fetched <- trading.getAccountsOpenedOn(dt.toLocalDate())
         } yield assertTrue(
           fetched.forall(_.dateOfOpen.toLocalDate() == dt.toLocalDate())
         )
       }
-    }.provideCustomLayer(TradingServiceTest.layer),
+    }.provide(testLayer),
     test("successfully invoke getTrades") {
       check(accountGen) { account =>
         for {
-          stored <- AccountRepository.store(account)
+          repo   <- ZIO.service[AccountRepository]
+          stored <- repo.store(account)
         } yield assert(stored.accountType)(
           isOneOf(AccountType.values)
         )
       } *>
         check(Gen.listOfN(5)(tradeGen)) { trades =>
           for {
-            accs <- AccountRepository.all
+            repo <- ZIO.service[AccountRepository]
+            accs <- repo.all
             _    <- TestClock.adjust(1.day)
             now  <- zio.Clock.instant
             dt                    = LocalDateTime.ofInstant(now, ZoneOffset.UTC)
@@ -53,33 +59,36 @@ object TradingServiceSpec extends DefaultRunnableSpec {
             _ <- TradeRepository.storeNTrades(
               NonEmptyList(tradesTodayForAccount.head, tradesTodayForAccount.tail: _*)
             )
-            fetched <- TradingService.getTrades(accs.head.no, Some(dt.toLocalDate()))
+            trading <- ZIO.service[TradingService]
+            fetched <- trading.getTrades(accs.head.no, Some(dt.toLocalDate()))
           } yield assertTrue(
             fetched.forall(_.tradeDate.toLocalDate() == dt.toLocalDate())
           )
         }
-    }.provideCustomLayer(TradingServiceTest.layer),
+    }.provide(testLayer),
     test("successfully invoke orders") {
       check(Gen.listOfN(5)(frontOfficeOrderGen)) { foOrders =>
         for {
-          os <- TradingService.orders(NonEmptyList(foOrders.head, foOrders.tail: _*))
+          trading <- ZIO.service[TradingService]
+          os      <- trading.orders(NonEmptyList(foOrders.head, foOrders.tail: _*))
         } yield assertTrue(
           os.size > 0
         )
       }
-    }.provideCustomLayer(TradingServiceTest.layer),
+    }.provide(testLayer),
     test("successfully generate trades from front office input") {
       check(tradeGnerationInputGen) { case (account, isin, userId) =>
         check(generateTradeFrontOfficeInputGenWithAccountAndInstrument(List(account.no), List(isin))) { foInput =>
           ZIO.succeed(println(foInput.asJson.printWith(Printer.noSpaces))) *>
             (for {
-              trades <- TradingService.generateTrade(foInput, userId)
+              trading <- ZIO.service[TradingService]
+              trades  <- trading.generateTrade(foInput, userId)
             } yield assertTrue(
               trades.size > 0 && trades.forall(trade => trade.accountNo == account.no && trade.isin == isin)
             ))
         }
       }
-    }.provideCustomLayer(TradingServiceTest.layer)
+    }.provide(testLayer)
   )
 }
 
@@ -88,7 +97,7 @@ object TradingServiceTest {
     AccountRepository with OrderRepository with ExecutionRepository with TradeRepository,
     TradingService
   ] = {
-    (TradingServiceLive(_, _, _, _)).toLayer
+    ZLayer.fromFunction(TradingServiceLive(_, _, _, _))
   }
   val layer =
     (AccountRepositoryInMemory.layer ++

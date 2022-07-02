@@ -17,35 +17,41 @@ import model.order._
 import model.market._
 import codecs._
 import repository.ExecutionRepository
-import config._
+import tradex.domain.config._
+import cats.effect.kernel.Resource
 
-final case class ExecutionRepositoryLive(xa: Transactor[Task]) extends ExecutionRepository {
+final case class ExecutionRepositoryLive(xaResource: Resource[Task, Transactor[Task]]) extends ExecutionRepository {
   import ExecutionRepositoryLive.SQL
 
   /** store */
   def store(exe: Execution): Task[Execution] =
-    SQL
-      .insertExecution(exe)
-      .run
-      .transact(xa)
-      .map(_ => exe)
-      .orDie
+    xaResource.use { xa =>
+      SQL
+        .insertExecution(exe)
+        .run
+        .transact(xa)
+        .map(_ => exe)
+        .orDie
+    }
 
   /** store many executions */
   def storeMany(executions: NonEmptyList[Execution]): Task[Unit] =
-    SQL
-      .insertMany(executions.toList)
-      .transact(xa)
-      .map(_ => ())
-      .orDie
+    xaResource.use { xa =>
+      SQL
+        .insertMany(executions.toList)
+        .transact(xa)
+        .map(_ => ())
+        .orDie
+    }
 }
 
 object ExecutionRepositoryLive extends CatzInterop {
   val layer: ZLayer[DBConfig, Throwable, ExecutionRepository] = {
-    (for {
-      cfg        <- ZIO.environmentWith[DBConfig](_.get).toManaged
-      transactor <- mkTransactor(cfg)
-    } yield new ExecutionRepositoryLive(transactor)).toLayer
+    ZLayer
+      .scoped(for {
+        cfg        <- ZIO.service[DBConfig]
+        transactor <- mkTransactor(cfg)
+      } yield new ExecutionRepositoryLive(transactor))
   }
 
   object SQL {

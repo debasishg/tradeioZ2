@@ -14,67 +14,83 @@ import doobie.postgres.implicits._
 import model.account._
 import codecs._
 import repository.AccountRepository
-import config._
+import tradex.domain.config._
+import cats.effect.kernel.Resource
 
-final case class AccountRepositoryLive(xa: Transactor[Task]) extends AccountRepository {
+final case class AccountRepositoryLive(xaResource: Resource[Task, Transactor[Task]]) extends AccountRepository {
   import AccountRepositoryLive.SQL
 
   def all: Task[List[Account]] =
-    SQL.getAll
-      .to[List]
-      .transact(xa)
-      .orDie
+    xaResource.use { xa =>
+      SQL.getAll
+        .to[List]
+        .transact(xa)
+        .orDie
+    }
 
   def queryByAccountNo(no: AccountNo): Task[Option[Account]] =
-    SQL
-      .get(no.value.value)
-      .option
-      .transact(xa)
-      .orDie
+    xaResource.use { xa =>
+      SQL
+        .get(no.value.value)
+        .option
+        .transact(xa)
+        .orDie
+    }
 
   def store(a: Account): Task[Account] =
-    SQL
-      .upsert(a)
-      .run
-      .transact(xa)
-      .map(_ => a)
-      .orDie
+    xaResource.use { xa =>
+      SQL
+        .upsert(a)
+        .run
+        .transact(xa)
+        .map(_ => a)
+        .orDie
+    }
 
   def store(as: List[Account]): Task[Unit] =
-    SQL
-      .insertMany(as)
-      .transact(xa)
-      .map(_ => ())
-      .orDie
+    xaResource.use { xa =>
+      SQL
+        .insertMany(as)
+        .transact(xa)
+        .map(_ => ())
+        .orDie
+    }
 
   def allOpenedOn(openedOnDate: LocalDate): Task[List[Account]] =
-    SQL
-      .getByDateOfOpen(openedOnDate)
-      .to[List]
-      .transact(xa)
-      .orDie
+    xaResource.use { xa =>
+      SQL
+        .getByDateOfOpen(openedOnDate)
+        .to[List]
+        .transact(xa)
+        .orDie
+    }
 
   def allClosed(closeDate: Option[LocalDate]): Task[List[Account]] =
-    closeDate
-      .map { cd =>
-        SQL.getAllClosedAfter(cd).to[List].transact(xa).orDie
-      }
-      .getOrElse(SQL.getAllClosed.to[List].transact(xa).orDie)
+    xaResource.use { xa =>
+      closeDate
+        .map { cd =>
+          SQL.getAllClosedAfter(cd).to[List].transact(xa).orDie
+        }
+        .getOrElse(SQL.getAllClosed.to[List].transact(xa).orDie)
+    }
 
   def allAccountsOfType(accountType: AccountType): Task[List[Account]] =
-    SQL
-      .getByType(accountType.entryName)
-      .to[List]
-      .transact(xa)
-      .orDie
+    xaResource.use { xa =>
+      SQL
+        .getByType(accountType.entryName)
+        .to[List]
+        .transact(xa)
+        .orDie
+    }
 }
 
 object AccountRepositoryLive extends CatzInterop {
   val layer: ZLayer[DBConfig, Throwable, AccountRepository] = {
-    (for {
-      cfg        <- ZIO.environmentWith[DBConfig](_.get).toManaged
-      transactor <- mkTransactor(cfg)
-    } yield new AccountRepositoryLive(transactor)).toLayer
+    ZLayer
+      .scoped(for {
+        cfg        <- ZIO.service[DBConfig]
+        transactor <- mkTransactor(cfg)
+      } yield new AccountRepositoryLive(transactor))
   }
 
   object SQL {

@@ -55,10 +55,10 @@ final case class TradingServiceLive(
       Order
         .create(frontOfficeOrders)
         .fold(
-          errs => IO.fail(OrderingError(errs.toList.mkString("/"))),
+          errs => ZIO.fail(OrderingError(errs.toList.mkString("/"))),
           orders =>
             for {
-              os <- IO.succeed(NonEmptyList.fromIterable(orders.head, orders.tail))
+              os <- ZIO.succeed(NonEmptyList.fromIterable(orders.head, orders.tail))
               _  <- persistOrders(os)
             } yield os
         )
@@ -78,7 +78,7 @@ final case class TradingServiceLive(
     withTradeRepositoryService {
       for {
         executions <- ois.forEach { case (order, lineItem) =>
-          IO.succeed(
+          ZIO.succeed(
             Execution.execution(
               brokerAccountNo,
               order.no,
@@ -125,7 +125,7 @@ final case class TradingServiceLive(
               None,
               userId = Some(userId)
             )
-            .fold(errs => IO.fail(AllocationError(errs.toList.mkString("/"))), IO.succeed(_))
+            .fold(errs => ZIO.fail(AllocationError(errs.toList.mkString("/"))), ZIO.succeed(_))
         }
         _ <- persistTrades(tradesNoTaxFee)
 
@@ -135,29 +135,29 @@ final case class TradingServiceLive(
 
   private def withTradeRepositoryService[A](t: Task[A]): IO[TradingError, A] =
     t.foldZIO(
-      error => IO.fail(TradeGenerationError(error.getMessage)),
-      success => IO.succeed(success)
+      error => ZIO.fail(TradeGenerationError(error.getMessage)),
+      success => ZIO.succeed(success)
     )
 
   private def persistOrders(orders: NonEmptyList[Order]): IO[OrderingError, Unit] =
     or.store(orders)
       .foldZIO(
-        error => IO.fail(OrderingError(error.getMessage)),
-        success => IO.succeed(success)
+        error => ZIO.fail(OrderingError(error.getMessage)),
+        success => ZIO.succeed(success)
       )
 
   private def persistExecutions(executions: NonEmptyList[Execution]): IO[ExecutionError, Unit] =
     er.storeMany(executions)
       .foldZIO(
-        error => IO.fail(ExecutionError(error.getMessage)),
-        success => IO.succeed(success)
+        error => ZIO.fail(ExecutionError(error.getMessage)),
+        success => ZIO.succeed(success)
       )
 
   private def persistTrades(trades: NonEmptyList[Trade]): IO[TradingError, Unit] =
     tr.storeNTrades(trades)
       .foldZIO(
-        error => IO.fail(TradeGenerationError(error.getMessage)),
-        success => IO.succeed(success)
+        error => ZIO.fail(TradeGenerationError(error.getMessage)),
+        success => ZIO.succeed(success)
       )
 }
 
@@ -168,6 +168,6 @@ object TradingServiceLive {
     Throwable,
     TradingService
   ] = {
-    (TradingServiceLive(_, _, _, _)).toLayer
+    ZLayer.fromFunction(TradingServiceLive(_, _, _, _))
   }
 }
