@@ -6,7 +6,6 @@ import tradex.domain.config
 import services.trading._
 import services.accounting._
 import repository._
-import repository.inmemory._
 import tradex.domain.repository.doobie.AccountRepositoryLive
 import tradex.domain.repository.doobie.OrderRepositoryLive
 import tradex.domain.repository.doobie.ExecutionRepositoryLive

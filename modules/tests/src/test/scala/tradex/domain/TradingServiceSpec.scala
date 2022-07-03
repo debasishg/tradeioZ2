@@ -19,7 +19,6 @@ import io.circe.syntax._
 
 object TradingServiceSpec extends ZIOSpecDefault {
   val localDateZERO = LocalDateTime.ofEpochSecond(0, 0, ZoneOffset.UTC)
-  val testLayer     = TradingServiceTest.layer ++ TestRandom.deterministic ++ Sized.default ++ TestConfig.default
 
   val spec = suite("Trading Service")(
     test("successfully invoke getAccountsOpenedOn") {
@@ -38,7 +37,7 @@ object TradingServiceSpec extends ZIOSpecDefault {
           fetched.forall(_.dateOfOpen.toLocalDate() == dt.toLocalDate())
         )
       }
-    }.provide(testLayer),
+    },
     test("successfully invoke getTrades") {
       check(accountGen) { account =>
         for {
@@ -65,7 +64,7 @@ object TradingServiceSpec extends ZIOSpecDefault {
             fetched.forall(_.tradeDate.toLocalDate() == dt.toLocalDate())
           )
         }
-    }.provide(testLayer),
+    },
     test("successfully invoke orders") {
       check(Gen.listOfN(5)(frontOfficeOrderGen)) { foOrders =>
         for {
@@ -75,7 +74,7 @@ object TradingServiceSpec extends ZIOSpecDefault {
           os.size > 0
         )
       }
-    }.provide(testLayer),
+    },
     test("successfully generate trades from front office input") {
       check(tradeGnerationInputGen) { case (account, isin, userId) =>
         check(generateTradeFrontOfficeInputGenWithAccountAndInstrument(List(account.no), List(isin))) { foInput =>
@@ -88,8 +87,8 @@ object TradingServiceSpec extends ZIOSpecDefault {
             ))
         }
       }
-    }.provide(testLayer)
-  )
+    }
+  ).provide(TradingServiceTest.layer, TestRandom.deterministic, Sized.default, TestConfig.default)
 }
 
 object TradingServiceTest {
