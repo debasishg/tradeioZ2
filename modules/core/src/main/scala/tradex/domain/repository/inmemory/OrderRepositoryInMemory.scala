@@ -20,6 +20,6 @@ final case class OrderRepositoryInMemory(state: Ref[Map[OrderNo, Order]]) extend
 object OrderRepositoryInMemory {
   val layer: ULayer[OrderRepository] =
     ZLayer.scoped(
-      Ref.make(Map.empty[OrderNo, Order]).map(r => OrderRepositoryInMemory(r))
+      Ref.make(Map.empty[OrderNo, Order]).map(OrderRepositoryInMemory(_))
     )
 }

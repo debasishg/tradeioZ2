@@ -162,12 +162,5 @@ final case class TradingServiceLive(
 }
 
 object TradingServiceLive {
-
-  val layer: ZLayer[
-    AccountRepository with OrderRepository with ExecutionRepository with TradeRepository,
-    Throwable,
-    TradingService
-  ] = {
-    ZLayer.fromFunction(TradingServiceLive(_, _, _, _))
-  }
+  val layer = ZLayer.fromFunction(TradingServiceLive.apply _)
 }

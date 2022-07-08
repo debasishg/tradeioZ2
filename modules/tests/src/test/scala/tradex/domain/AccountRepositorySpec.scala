@@ -40,5 +40,10 @@ object AccountRepositorySpec extends ZIOSpecDefault {
         } yield assertTrue(allAccounts.forall(_.name.value.value.startsWith("debasish")))
       }
     }
-  ).provide(AccountRepositoryInMemory.layer, TestRandom.deterministic, Sized.default, TestConfig.default)
+  ).provide(
+    AccountRepositoryInMemory.layer,
+    TestRandom.deterministic,
+    Sized.default,
+    TestConfig.default
+  )
 }

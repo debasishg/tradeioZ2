@@ -43,8 +43,5 @@ final case class AccountingServiceLive(br: BalanceRepository) extends Accounting
 }
 
 object AccountingServiceLive {
-
-  val layer: ZLayer[BalanceRepository, Throwable, AccountingService] = {
-    ZLayer.fromFunction(AccountingServiceLive(_))
-  }
+  val layer = ZLayer.fromFunction(AccountingServiceLive.apply _)
 }

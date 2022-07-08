@@ -28,6 +28,6 @@ final case class ExecutionRepositoryInMemory(state: Ref[Map[ExecutionReferenceNo
 object ExecutionRepositoryInMemory {
   val layer: ULayer[ExecutionRepository] =
     ZLayer.scoped(
-      Ref.make(Map.empty[ExecutionReferenceNo, Execution]).map(r => ExecutionRepositoryInMemory(r))
+      Ref.make(Map.empty[ExecutionReferenceNo, Execution]).map(ExecutionRepositoryInMemory(_))
     )
 }

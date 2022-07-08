@@ -30,6 +30,6 @@ final case class AccountRepositoryInMemory(state: Ref[Map[AccountNo, Account]]) 
 object AccountRepositoryInMemory {
   val layer: ULayer[AccountRepository] =
     ZLayer.scoped(
-      Ref.make(Map.empty[AccountNo, Account]).map(r => AccountRepositoryInMemory(r))
+      Ref.make(Map.empty[AccountNo, Account]).map(AccountRepositoryInMemory(_))
     )
 }
