@@ -56,11 +56,12 @@ final case class TradingServiceLive(
         .create(frontOfficeOrders)
         .fold(
           errs => ZIO.fail(OrderingError(errs.toList.mkString("/"))),
-          orders =>
-            for {
-              os <- ZIO.succeed(NonEmptyList.fromIterable(orders.head, orders.tail))
-              _  <- persistOrders(os)
-            } yield os
+          orders => {
+            NonEmptyList
+              .fromIterableOption(orders)
+              .map(os => (persistOrders(os) *> ZIO.succeed(os)))
+              .getOrElse(ZIO.fail(OrderingError("Empty order list encountered")))
+          }
         )
     )
   }
@@ -134,31 +135,19 @@ final case class TradingServiceLive(
   }
 
   private def withTradeRepositoryService[A](t: Task[A]): IO[TradingError, A] =
-    t.foldZIO(
-      error => ZIO.fail(TradeGenerationError(error.getMessage)),
-      success => ZIO.succeed(success)
-    )
+    t.mapError(th => TradeGenerationError(th.getMessage))
 
   private def persistOrders(orders: NonEmptyList[Order]): IO[OrderingError, Unit] =
     or.store(orders)
-      .foldZIO(
-        error => ZIO.fail(OrderingError(error.getMessage)),
-        success => ZIO.succeed(success)
-      )
+      .mapError(th => OrderingError(th.getMessage))
 
   private def persistExecutions(executions: NonEmptyList[Execution]): IO[ExecutionError, Unit] =
     er.storeMany(executions)
-      .foldZIO(
-        error => ZIO.fail(ExecutionError(error.getMessage)),
-        success => ZIO.succeed(success)
-      )
+      .mapError(th => ExecutionError(th.getMessage))
 
   private def persistTrades(trades: NonEmptyList[Trade]): IO[TradingError, Unit] =
     tr.storeNTrades(trades)
-      .foldZIO(
-        error => ZIO.fail(TradeGenerationError(error.getMessage)),
-        success => ZIO.succeed(success)
-      )
+      .mapError(th => TradeGenerationError(th.getMessage))
 }
 
 object TradingServiceLive {

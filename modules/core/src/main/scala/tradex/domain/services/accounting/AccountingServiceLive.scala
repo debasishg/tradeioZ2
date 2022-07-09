@@ -16,11 +16,9 @@ final case class AccountingServiceLive(br: BalanceRepository) extends Accounting
     withAccountingService(
       trade.netAmount
         .map { amt =>
-          for {
-            balance <- br.store(
-              Balance(trade.accountNo, amt, amt.currency, today)
-            )
-          } yield balance
+          br.store(
+            Balance(trade.accountNo, amt, amt.currency, today)
+          )
         }
         .getOrElse(ZIO.fail(AccountingError(s"No net amount to post for $trade")))
     )
@@ -36,10 +34,7 @@ final case class AccountingServiceLive(br: BalanceRepository) extends Accounting
     withAccountingService(br.queryBalanceAsOf(date))
 
   private def withAccountingService[A](t: Task[A]): IO[AccountingError, A] =
-    t.foldZIO(
-      error => ZIO.fail(AccountingError(error.getMessage)),
-      success => ZIO.succeed(success)
-    )
+    t.mapError(th => AccountingError(th.getMessage))
 }
 
 object AccountingServiceLive {
