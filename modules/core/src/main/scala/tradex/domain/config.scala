@@ -9,7 +9,8 @@ import zio.config.typesafe.TypesafeConfig
 object config {
   final case class AppConfig(
       tradingConfig: TradingConfig,
-      dbConfig: DBConfig
+      dbConfig: DBConfig,
+      dataSourceConfig: DataSourceConfig
   )
 
   final case class TradingConfig(
@@ -25,7 +26,11 @@ object config {
       password: String
   )
 
-  type AllConfig = AppConfig with TradingConfig with DBConfig
+  final case class DataSourceConfig(
+      conectionPoolSize: Int
+  )
+
+  type AllConfig = AppConfig with TradingConfig with DBConfig with DataSourceConfig
 
   final val Root = "tradex"
 
@@ -35,5 +40,6 @@ object config {
 
   val live: TaskLayer[AllConfig] = appConfig >+>
     appConfig.narrow(_.dbConfig) >+>
+    appConfig.narrow(_.dataSourceConfig) >+>
     appConfig.narrow(_.tradingConfig)
 }
