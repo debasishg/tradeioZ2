@@ -1,7 +1,7 @@
 package tradex.domain
 package repository.doobie
 
-import java.time.{ LocalDate, LocalDateTime }
+import java.time.{ LocalDate, ZonedDateTime }
 import zio._
 import zio.prelude._
 import zio.interop.catz._
@@ -18,7 +18,6 @@ import model.order._
 import model.instrument._
 import repository.OrderRepository
 import cats.effect.kernel.Resource
-import java.time.ZonedDateTime
 
 final case class OrderRepositoryLive(xaResource: Resource[Task, Transactor[Task]]) extends OrderRepository {
   import OrderRepositoryLive.SQL

@@ -13,8 +13,8 @@ object Dependencies {
     val zioConfig      = "dev.zio" %% "zio-config"       % zioConfigVersion
     val zioConfigTypesafe = "dev.zio" %% "zio-config-typesafe" % zioConfigVersion
     val zioConfigMagnolia = "dev.zio" %% "zio-config-magnolia" % zioConfigVersion
-    val zioTest        = "dev.zio" %% "zio-test"         % zioVersion % "it, test"
-    val zioTestSbt     = "dev.zio" %% "zio-test-sbt"     % zioVersion % "it, test"
+    val zioTest        = "dev.zio" %% "zio-test"         % zioVersion % "it,test"
+    val zioTestSbt     = "dev.zio" %% "zio-test-sbt"     % zioVersion % "it,test"
   }
 
   // Scalafix rules
