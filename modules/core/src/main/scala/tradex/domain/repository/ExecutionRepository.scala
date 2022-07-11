@@ -12,6 +12,9 @@ trait ExecutionRepository {
 
   /** store many executions */
   def storeMany(executions: NonEmptyList[Execution]): Task[Unit]
+
+  /** delete all executions */
+  def deleteAll: Task[Unit]
 }
 
 object ExecutionRepository {

@@ -8,10 +8,10 @@ import account._
 import instrument._
 import order._
 import market._
-import java.time.LocalDateTime
 import io.estatico.newtype.macros.newtype
 import derevo.circe.magnolia._
 import derevo.derive
+import java.time.ZonedDateTime
 
 object execution {
   @derive(decoder, encoder)
@@ -27,7 +27,7 @@ object execution {
       buySell: BuySell,
       unitPrice: UnitPrice,
       quantity: Quantity,
-      dateOfExecution: LocalDateTime,
+      dateOfExecution: ZonedDateTime,
       exchangeExecutionRefNo: Option[String] = None,
       executionRefNo: Option[ExecutionReferenceNo] = None
   )
@@ -42,7 +42,7 @@ object execution {
       buySell: String,
       unitPrice: BigDecimal,
       quantity: BigDecimal,
-      dateOfExecution: LocalDateTime
+      dateOfExecution: ZonedDateTime
   )
 
   object Execution {
@@ -54,7 +54,7 @@ object execution {
         buySell: BuySell,
         unitPrice: UnitPrice,
         quantity: Quantity,
-        dateOfExecution: LocalDateTime
+        dateOfExecution: ZonedDateTime
     ): Execution = {
       Execution(
         accountNo,
@@ -77,7 +77,7 @@ object execution {
         buySell: String,
         unitPrice: BigDecimal,
         quantity: BigDecimal,
-        dateOfExecution: LocalDateTime
+        dateOfExecution: ZonedDateTime
     ): Validation[String, Execution] = {
       Validation
         .validateWith(

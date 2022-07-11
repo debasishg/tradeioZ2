@@ -14,6 +14,9 @@ trait InstrumentRepository {
 
   /** store */
   def store(ins: Instrument): Task[Instrument]
+
+  /** delete all instruments */
+  def deleteAll: Task[Unit]
 }
 
 object InstrumentRepository {

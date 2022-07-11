@@ -1,7 +1,6 @@
 package tradex.domain
 package model
 
-import java.time.LocalDateTime
 import java.time.Instant
 import zio.prelude._
 
@@ -18,6 +17,7 @@ import eu.timepit.refined.auto._
 import derevo.circe.magnolia._
 import derevo.derive
 import io.circe.refined._
+import java.time.ZonedDateTime
 
 object order {
   @derive(decoder, encoder)
@@ -55,7 +55,7 @@ object order {
   @derive(decoder, encoder)
   final case class Order private (
       no: OrderNo,
-      date: LocalDateTime,
+      date: ZonedDateTime,
       accountNo: AccountNo,
       items: NonEmptyList[LineItem]
   )
@@ -90,7 +90,7 @@ object order {
 
     private[domain] def makeOrder(
         ono: String,
-        odt: LocalDateTime,
+        odt: ZonedDateTime,
         ano: String,
         forders: List[FrontOfficeOrder]
     ): Validation[String, Order] = {
@@ -125,7 +125,7 @@ object order {
 
     private[domain] def makeOrder(
         ono: String,
-        orderDate: LocalDateTime,
+        orderDate: ZonedDateTime,
         accountNo: String,
         lineItems: NonEmptyList[LineItem]
     ): Validation[String, Order] = {

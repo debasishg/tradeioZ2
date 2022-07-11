@@ -23,6 +23,9 @@ final case class ExecutionRepositoryInMemory(state: Ref[Map[ExecutionReferenceNo
       .map(_ => exe)
 
   def storeMany(executions: NonEmptyList[Execution]): Task[Unit] = executions.forEach(t => store(t)).map(_ => ())
+
+  def deleteAll: Task[Unit] =
+    state.update(m => m -- m.keys)
 }
 
 object ExecutionRepositoryInMemory {

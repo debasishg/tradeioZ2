@@ -19,6 +19,9 @@ trait OrderRepository {
 
   /** store many orders */
   def store(orders: NonEmptyList[Order]): Task[Unit]
+
+  /** delete all orders */
+  def deleteAll: Task[Unit]
 }
 
 object OrderRepository {

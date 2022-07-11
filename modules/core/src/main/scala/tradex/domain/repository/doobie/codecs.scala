@@ -31,7 +31,7 @@ object codecs {
   implicit val accountTypeMeta: Meta[AccountType] =
     Meta[String].timap(s => AccountType.withName(s))(_.entryName)
 
-  implicit val currencyMeta: Meta[Currency] = Meta[String].timap(s => Currency(s).get)(_.name)
+  implicit val currencyMeta: Meta[Currency] = Meta[String].timap(s => Currency(s).get)(_.code)
 
   private def isinFromString(s: String) = {
     validate[ISINCode](s).fold(errs => throw new Exception(errs.toString), identity)

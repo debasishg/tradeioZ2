@@ -2,7 +2,7 @@ package tradex.domain
 package repository.doobie
 
 import java.util.UUID
-import java.time.{ LocalDate, LocalDateTime }
+import java.time.{ LocalDate, ZonedDateTime }
 import zio._
 import zio.prelude._
 import zio.interop.catz._
@@ -93,6 +93,14 @@ final case class TradeRepositoryLive(xaResource: Resource[Task, Transactor[Task]
 
   def storeNTrades(trades: NonEmptyList[Trade]): Task[Unit] =
     trades.forEach(trade => store(trade)).map(_ => ())
+
+  def deleteAll: Task[Unit] =
+    xaResource.use { xa =>
+      (SQL.deleteAllTaxFees.run
+        .transact(xa) *> SQL.deleteAllTrades.run.transact(xa))
+        .map(_ => ())
+        .orDie
+    }
 }
 
 object TradeRepositoryLive extends CatzInterop {
@@ -117,8 +125,8 @@ object TradeRepositoryLive extends CatzInterop {
             BuySell,
             UnitPrice,
             Quantity,
-            LocalDateTime,
-            Option[LocalDateTime],
+            ZonedDateTime,
+            Option[ZonedDateTime],
             Option[Money],
             Option[UserId]
         )
@@ -152,8 +160,8 @@ object TradeRepositoryLive extends CatzInterop {
             BuySell,
             UnitPrice,
             Quantity,
-            LocalDateTime,
-            Option[LocalDateTime],
+            ZonedDateTime,
+            Option[ZonedDateTime],
             Option[Money],
             Option[UserId],
             TaxFeeId,
@@ -167,10 +175,10 @@ object TradeRepositoryLive extends CatzInterop {
       val sql = s"""
         INSERT INTO tradeTaxFees 
 				(
-					tradeRefNo,
+					traderefno,
 					taxFeeId,
 					amount
-				) VALUES (${refNo}, ?, ?)
+				) VALUES ('${refNo}'::uuid, ?, ?)
 			"""
       Update[TradeTaxFee](sql).updateMany(taxFees)
     }
@@ -193,7 +201,7 @@ object TradeRepositoryLive extends CatzInterop {
 					${trade.accountNo},
 					${trade.isin},
 					${trade.market},
-					${trade.buySell},
+					${trade.buySell}::buySell,
 					${trade.unitPrice},
 					${trade.quantity},
 					${trade.tradeDate},
@@ -203,7 +211,7 @@ object TradeRepositoryLive extends CatzInterop {
 				)
       """
       sql.update
-        .withUniqueGeneratedKeys[UUID]("tradeRefNo")
+        .withUniqueGeneratedKeys[UUID]("traderefno")
         .flatMap { refNo =>
           insertTaxFees(TradeReferenceNo(refNo), trade.taxFees)
         }
@@ -235,5 +243,13 @@ object TradeRepositoryLive extends CatzInterop {
         FROM   trades t, tradeTaxFees f
         WHERE  t.tradeRefNo = f.tradeRefNo
       """.query[Trade]
+
+    def deleteAllTrades: Update0 = sql"""
+      delete from trades
+      """.update
+
+    def deleteAllTaxFees: Update0 = sql"""
+      delete from tradeTaxFees
+      """.update
   }
 }

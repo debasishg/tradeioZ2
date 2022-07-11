@@ -1,7 +1,6 @@
 package tradex.domain
 package model
 
-import java.time.LocalDateTime
 import zio.prelude._
 
 import squants.market._
@@ -25,6 +24,7 @@ import io.circe.refined._
 
 import _root_.shapeless.::
 import _root_.shapeless.HNil
+import java.time.ZonedDateTime
 
 object account {
   type AccountNoString = String Refined AllOf[
@@ -55,8 +55,8 @@ object account {
   final case class Account private (
       no: AccountNo,
       name: AccountName,
-      dateOfOpen: LocalDateTime,
-      dateOfClose: Option[LocalDateTime],
+      dateOfOpen: ZonedDateTime,
+      dateOfClose: Option[ZonedDateTime],
       accountType: AccountType,
       baseCurrency: Currency,
       tradingCurrency: Option[Currency],
@@ -67,8 +67,8 @@ object account {
   case class CreateAccount(
       no: String,
       name: String,
-      openDate: Option[LocalDateTime],
-      closeDate: Option[LocalDateTime],
+      openDate: Option[ZonedDateTime],
+      closeDate: Option[ZonedDateTime],
       baseCcy: Currency,
       tradingCcy: Option[Currency],
       settlementCcy: Option[Currency],
@@ -112,8 +112,8 @@ object account {
     def tradingAccount(
         no: String,
         name: String,
-        openDate: Option[LocalDateTime],
-        closeDate: Option[LocalDateTime],
+        openDate: Option[ZonedDateTime],
+        closeDate: Option[ZonedDateTime],
         baseCcy: Currency,
         tradingCcy: Currency
     ): Validation[String, Account] = {
@@ -138,8 +138,8 @@ object account {
     def settlementAccount(
         no: String,
         name: String,
-        openDate: Option[LocalDateTime],
-        closeDate: Option[LocalDateTime],
+        openDate: Option[ZonedDateTime],
+        closeDate: Option[ZonedDateTime],
         baseCcy: Currency,
         settlementCcy: Currency
     ): Validation[String, Account] = {
@@ -164,8 +164,8 @@ object account {
     def tradingAndSettlementAccount(
         no: String,
         name: String,
-        openDate: Option[LocalDateTime],
-        closeDate: Option[LocalDateTime],
+        openDate: Option[ZonedDateTime],
+        closeDate: Option[ZonedDateTime],
         baseCcy: Currency,
         tradingCcy: Currency,
         settlementCcy: Currency
@@ -198,9 +198,9 @@ object account {
         .mapError(s => s"Account Name cannot be blank (root cause: $s")
 
     private def validateOpenCloseDate(
-        od: LocalDateTime,
-        cd: Option[LocalDateTime]
-    ): Validation[String, (LocalDateTime, Option[LocalDateTime])] =
+        od: ZonedDateTime,
+        cd: Option[ZonedDateTime]
+    ): Validation[String, (ZonedDateTime, Option[ZonedDateTime])] =
       cd.map { c =>
         if (c isBefore od)
           Validation.fail(s"Close date [$c] cannot be earlier than open date [$od]")
@@ -217,8 +217,8 @@ object account {
 
     private def validateCloseDate(
         a: Account,
-        cd: LocalDateTime
-    ): Validation[String, LocalDateTime] = {
+        cd: ZonedDateTime
+    ): Validation[String, ZonedDateTime] = {
       if (cd isBefore a.dateOfOpen)
         Validation.fail(s"Close date [$cd] cannot be earlier than open date [${a.dateOfOpen}]")
       else Validation.succeed(cd)
@@ -226,7 +226,7 @@ object account {
 
     def close(
         a: Account,
-        closeDate: LocalDateTime
+        closeDate: ZonedDateTime
     ): Validation[String, Account] = {
       // using the monadic Validation
       // no need to validate the close date if the account is already closed

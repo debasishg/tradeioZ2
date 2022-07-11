@@ -1,7 +1,6 @@
 package tradex.domain
 package repository.doobie
 
-import java.time.LocalDateTime
 import zio._
 import zio.prelude.NonEmptyList
 import zio.interop.catz._
@@ -19,6 +18,7 @@ import codecs._
 import repository.ExecutionRepository
 import tradex.domain.config._
 import cats.effect.kernel.Resource
+import java.time.ZonedDateTime
 
 final case class ExecutionRepositoryLive(xaResource: Resource[Task, Transactor[Task]]) extends ExecutionRepository {
   import ExecutionRepositoryLive.SQL
@@ -39,6 +39,14 @@ final case class ExecutionRepositoryLive(xaResource: Resource[Task, Transactor[T
     xaResource.use { xa =>
       SQL
         .insertMany(executions.toList)
+        .transact(xa)
+        .map(_ => ())
+        .orDie
+    }
+
+  def deleteAll: Task[Unit] =
+    xaResource.use { xa =>
+      SQL.deleteAll.run
         .transact(xa)
         .map(_ => ())
         .orDie
@@ -68,7 +76,7 @@ object ExecutionRepositoryLive extends CatzInterop {
             BuySell,
             UnitPrice,
             Quantity,
-            LocalDateTime,
+            ZonedDateTime,
             Option[String]
         )
       ].contramap(execution =>
@@ -105,7 +113,7 @@ object ExecutionRepositoryLive extends CatzInterop {
   				${exe.orderNo},
   				${exe.isin},
   				${exe.market},
-  				${exe.buySell},
+  				${exe.buySell}::buySell,
   				${exe.unitPrice},
   				${exe.quantity},
   				${exe.dateOfExecution},
@@ -127,9 +135,13 @@ object ExecutionRepositoryLive extends CatzInterop {
             exchangeExecutionRefNo
           )
         VALUES 
-			    (?, ?, ?, ?, ?, ?, ?, ?, ?)
+			    (?, ?, ?, ?, ?::buySell, ?, ?, ?, ?)
        """
       Update[Execution](sql).updateMany(executions)
     }
+
+    def deleteAll: Update0 = sql"""
+      delete from executions
+      """.update
   }
 }

@@ -128,9 +128,14 @@ final case class TradingServiceLive(
             )
             .fold(errs => ZIO.fail(AllocationError(errs.toList.mkString("/"))), ZIO.succeed(_))
         }
-        _ <- persistTrades(tradesNoTaxFee)
+        tradesWithTaxFee = tradesNoTaxFee.map(t => Trade.withTaxFee(t))
+        _         <- persistTrades(tradesWithTaxFee)
+        allTrades <- tr.allTrades
 
-      } yield tradesNoTaxFee.map(t => Trade.withTaxFee(t))
+      } yield NonEmptyList.fromIterable(
+        allTrades.head,
+        allTrades.tail
+      )
     }
   }
 

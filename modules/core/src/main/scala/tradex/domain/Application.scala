@@ -6,11 +6,13 @@ import tradex.domain.config
 import services.trading._
 import services.accounting._
 import repository._
-import tradex.domain.repository.doobie.AccountRepositoryLive
-import tradex.domain.repository.doobie.OrderRepositoryLive
-import tradex.domain.repository.doobie.ExecutionRepositoryLive
-import tradex.domain.repository.doobie.TradeRepositoryLive
-import tradex.domain.repository.doobie.BalanceRepositoryLive
+import tradex.domain.repository.doobie.{
+  AccountRepositoryLive,
+  BalanceRepositoryLive,
+  ExecutionRepositoryLive,
+  OrderRepositoryLive,
+  TradeRepositoryLive
+}
 
 object Application {
 
@@ -19,8 +21,6 @@ object Application {
 
   type ServiceLayerEnv =
     TradingService with AccountingService
-
-  type AppEnv = ServiceLayerEnv
 
   // compose layers for prod
   object prod {
@@ -33,7 +33,7 @@ object Application {
       TradingServiceLive.layer ++ AccountingServiceLive.layer
 
     // final application layer for prod
-    val appLayer = // : ZLayer[Any, Throwable, AppEnv] =
+    val appLayer =
       configLayer >+>
         repositoryLayer >+>
         serviceLayer

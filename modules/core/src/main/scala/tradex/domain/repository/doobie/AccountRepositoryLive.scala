@@ -1,7 +1,7 @@
 package tradex.domain
 package repository.doobie
 
-import java.time.{ LocalDate, LocalDateTime }
+import java.time.{ LocalDate, ZonedDateTime }
 import squants.market._
 import zio._
 import zio.interop.catz._
@@ -82,6 +82,14 @@ final case class AccountRepositoryLive(xaResource: Resource[Task, Transactor[Tas
         .transact(xa)
         .orDie
     }
+
+  def deleteAll: Task[Unit] =
+    xaResource.use { xa =>
+      SQL.deleteAll.run
+        .transact(xa)
+        .map(_ => ())
+        .orDie
+    }
 }
 
 object AccountRepositoryLive extends CatzInterop {
@@ -94,15 +102,19 @@ object AccountRepositoryLive extends CatzInterop {
   }
 
   object SQL {
+    // implicit val accountTypeMeta: Meta[AccountType] = Meta[String].timap(AccountType.withName)(_.toString)
+    // implicit val accountTypeMapper: Meta[AccountType] =
+    // pgEnumString[AccountType]("accountType", AccountType.withName, _.entryName)
+
     def upsert(account: Account): Update0 = {
       sql"""
         INSERT INTO accounts
         VALUES (
           ${account.no}, 
           ${account.name}, 
+          ${account.accountType}::accountType, 
           ${account.dateOfOpen}, 
           ${account.dateOfClose}, 
-          ${account.accountType}, 
           ${account.baseCurrency}, 
           ${account.tradingCurrency}, 
           ${account.settlementCurrency}
@@ -126,8 +138,8 @@ object AccountRepositoryLive extends CatzInterop {
             AccountNo,
             AccountName,
             AccountType,
-            LocalDateTime,
-            Option[LocalDateTime],
+            ZonedDateTime,
+            Option[ZonedDateTime],
             Currency,
             Option[Currency],
             Option[Currency]
@@ -151,14 +163,14 @@ object AccountRepositoryLive extends CatzInterop {
           (
             no,
             name, 
+            type,
             dateOfOpen, 
             dateOfClose,
-            type,
             baseCurrency,
             tradingCurrency,
             settlementCurrency
           )
-        VALUES ( ?, ?, ?, ?, ?, ?, ?, ?)
+        VALUES ( ?, ?, ?::accountType, ?, ?, ?, ?, ?)
        """
       Update[Account](sql).updateMany(accounts)
     }
@@ -173,8 +185,8 @@ object AccountRepositoryLive extends CatzInterop {
             String,
             String,
             String,
-            LocalDateTime,
-            Option[LocalDateTime],
+            ZonedDateTime,
+            Option[ZonedDateTime],
             String,
             Option[String],
             Option[String]
@@ -241,5 +253,9 @@ object AccountRepositoryLive extends CatzInterop {
     def getByType(accountType: String): Query0[Account] = sql"""
       select * from accounts where accountType = $accountType
       """.query[Account]
+
+    def deleteAll: Update0 = sql"""
+      delete from accounts
+      """.update
   }
 }

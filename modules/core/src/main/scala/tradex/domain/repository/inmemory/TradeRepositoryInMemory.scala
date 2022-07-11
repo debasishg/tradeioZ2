@@ -40,6 +40,9 @@ final case class TradeRepositoryInMemory(state: Ref[Map[TradeReferenceNo, Trade]
       .map(_ => trd)
 
   def storeNTrades(trades: NonEmptyList[Trade]): Task[Unit] = trades.forEach(t => store(t)).map(_ => ())
+
+  def deleteAll: Task[Unit] =
+    state.update(m => m -- m.keys)
 }
 
 object TradeRepositoryInMemory {

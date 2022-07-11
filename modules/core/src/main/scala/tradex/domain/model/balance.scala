@@ -1,12 +1,12 @@
 package tradex.domain
 package model
 
-import java.time.LocalDateTime
 import zio.prelude._
 import derevo.circe.magnolia._
 import derevo.derive
 import squants.market._
 import account._
+import java.time.ZonedDateTime
 
 object balance {
   @derive(decoder, encoder)
@@ -14,7 +14,7 @@ object balance {
       accountNo: AccountNo,
       amount: Money,
       currency: Currency,
-      asOf: LocalDateTime
+      asOf: ZonedDateTime
   )
 
   object Balance {
@@ -22,7 +22,7 @@ object balance {
         accountNo: String,
         amount: Money,
         currency: Currency,
-        asOf: LocalDateTime
+        asOf: ZonedDateTime
     ): Validation[String, Balance] = {
       Validation.validateWith(
         Account.validateAccountNo(accountNo),
@@ -33,8 +33,8 @@ object balance {
     }
 
     private def validateAsOfDate(
-        date: LocalDateTime
-    ): Validation[String, LocalDateTime] =
+        date: ZonedDateTime
+    ): Validation[String, ZonedDateTime] =
       if (date.isAfter(today))
         Validation.fail(s"Balance date [$date] cannot be later than today")
       else Validation.succeed(date)

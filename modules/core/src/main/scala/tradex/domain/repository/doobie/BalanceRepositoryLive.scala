@@ -1,7 +1,7 @@
 package tradex.domain
 package repository.doobie
 
-import java.time.{ LocalDate, LocalDateTime }
+import java.time.{ LocalDate, ZonedDateTime }
 import squants.market._
 import zio._
 import zio.interop.catz._
@@ -75,7 +75,7 @@ object BalanceRepositoryLive extends CatzInterop {
             AccountNo,
             Money,
             Currency,
-            LocalDateTime
+            ZonedDateTime
         )
       ].contramap(balance =>
         (
@@ -96,7 +96,7 @@ object BalanceRepositoryLive extends CatzInterop {
             String,
             BigDecimal,
             String,
-            LocalDateTime
+            ZonedDateTime
         )
       ].map { case (ano, amt, ccy, asOf) =>
         Balance

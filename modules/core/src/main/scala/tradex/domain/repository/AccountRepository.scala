@@ -27,4 +27,7 @@ trait AccountRepository {
 
   /** all accounts trading / settlement / both */
   def allAccountsOfType(accountType: AccountType): Task[List[Account]]
+
+  /** delete all accounts */
+  def deleteAll: Task[Unit]
 }

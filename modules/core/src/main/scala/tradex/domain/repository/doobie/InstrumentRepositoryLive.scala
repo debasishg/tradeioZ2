@@ -1,7 +1,6 @@
 package tradex.domain
 package repository.doobie
 
-import java.time.LocalDateTime
 import squants.market._
 import zio._
 import zio.interop.catz._
@@ -15,6 +14,7 @@ import tradex.domain.config._
 import codecs._
 import repository.InstrumentRepository
 import cats.effect.kernel.Resource
+import java.time.ZonedDateTime
 
 final case class InstrumentRepositoryLive(xaResource: Resource[Task, Transactor[Task]]) extends InstrumentRepository {
   import InstrumentRepositoryLive.SQL
@@ -46,6 +46,14 @@ final case class InstrumentRepositoryLive(xaResource: Resource[Task, Transactor[
         .map(_ => ins)
         .orDie
     }
+
+  def deleteAll: Task[Unit] =
+    xaResource.use { xa =>
+      SQL.deleteAll.run
+        .transact(xa)
+        .map(_ => ())
+        .orDie
+    }
 }
 
 object InstrumentRepositoryLive extends CatzInterop {
@@ -64,6 +72,7 @@ object InstrumentRepositoryLive extends CatzInterop {
         VALUES (
           ${instrument.isinCode},
           ${instrument.name},
+          ${instrument.instrumentType}::instrumentType,
           ${instrument.dateOfIssue},
           ${instrument.dateOfMaturity},
           ${instrument.lotSize},
@@ -91,8 +100,8 @@ object InstrumentRepositoryLive extends CatzInterop {
             ISINCode,
             InstrumentName,
             InstrumentType,
-            Option[LocalDateTime],
-            Option[LocalDateTime],
+            Option[ZonedDateTime],
+            Option[ZonedDateTime],
             LotSize,
             Option[UnitPrice],
             Option[Money],
@@ -122,8 +131,8 @@ object InstrumentRepositoryLive extends CatzInterop {
             String,
             String,
             String,
-            Option[LocalDateTime],
-            Option[LocalDateTime],
+            Option[ZonedDateTime],
+            Option[ZonedDateTime],
             Int,
             Option[BigDecimal],
             Option[BigDecimal],
@@ -150,7 +159,11 @@ object InstrumentRepositoryLive extends CatzInterop {
       """.query[Instrument]
 
     def getByType(instrumentType: String): Query0[Instrument] = sql"""
-      select * from instruments where instrumentType = $instrumentType
+      select * from instruments where type = $instrumentType::instrumentType
       """.query[Instrument]
+
+    def deleteAll: Update0 = sql"""
+      delete from instruments
+      """.update
   }
 }

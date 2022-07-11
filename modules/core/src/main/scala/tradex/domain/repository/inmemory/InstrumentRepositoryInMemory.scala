@@ -13,6 +13,9 @@ final case class InstrumentRepositoryInMemory(state: Ref[Map[ISINCode, Instrumen
     state.get.map(_.values.filter(_.instrumentType == instrumentType).toList)
 
   def store(ins: Instrument): Task[Instrument] = state.update(m => m + ((ins.isinCode, ins))).map(_ => ins)
+
+  def deleteAll: Task[Unit] =
+    state.update(m => m -- m.keys)
 }
 
 object InstrumentRepositoryInMemory {

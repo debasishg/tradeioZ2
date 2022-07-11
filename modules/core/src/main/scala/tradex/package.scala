@@ -1,17 +1,16 @@
 package tradex
 
-import java.time.LocalDateTime
-
 import squants.market._
 import zio.prelude._
 
 import eu.timepit.refined._
 import eu.timepit.refined.api._
 import eu.timepit.refined.auto._
+import java.time.ZonedDateTime
 
 package object domain {
 
-  def today                  = LocalDateTime.now
+  def today                  = ZonedDateTime.now
   final val ZERO_BIG_DECIMAL = BigDecimal(0)
 
   implicit val moneyContext = defaultMoneyContext

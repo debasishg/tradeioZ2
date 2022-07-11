@@ -32,6 +32,9 @@ trait TradeRepository {
 
   /** store many trades */
   def storeNTrades(trades: NonEmptyList[Trade]): Task[Unit]
+
+  /** delete all trades */
+  def deleteAll: Task[Unit]
 }
 
 object TradeRepository {

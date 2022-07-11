@@ -90,6 +90,11 @@ object generators {
   def accountGen: Gen[Random with Sized, Account] =
     Gen.oneOf(tradingAccountGen, settlementAccountGen, bothAccountGen)
 
+  val instrumentNameGen: Gen[Random with Sized, InstrumentName] =
+    nonEmptyStringGen
+      .map(s => validate[InstrumentName](s))
+      .map(_.fold(errs => throw new Exception(errs.toString), identity))
+
   def isinGen: Gen[Any, ISINCode] = {
     val appleISINStr = "US0378331005"
     val baeISINStr   = "GB0002634946"
@@ -103,6 +108,16 @@ object generators {
           .fold(err => throw new Exception(err), identity)
       )
     Gen.fromIterable(isins)
+  }
+
+  def equityGen: Gen[Random with Sized, Instrument] = {
+    for {
+      isin <- isinGen
+      name <- instrumentNameGen
+      // dt   <- Gen.zonedDateTime
+      // getting timestamp out of range
+      up <- unitPriceGen
+    } yield Instrument(isin, name, InstrumentType.Equity, Some(today), None, LotSize(10), Some(up), None, None)
   }
 
   val unitPriceGen: Gen[Any, UnitPrice] = {
@@ -172,7 +187,29 @@ object generators {
     NonEmptyList(accs.head, accs.tail: _*)
   )
 
-  def tradeGnerationInputGen = for {
+  def generateTradeFrontOfficeInputGenWithAccountAndInstrument = {
+    val r = for {
+      accounts   <- Gen.listOfN(2)(tradingAccountGen)
+      instrument <- equityGen
+    } yield (accounts, instrument)
+
+    for {
+      (accounts, instrument) <- r
+      accs = accounts.map(_.no)
+      orders <- Gen.listOfN(3)(
+        frontOfficeOrderGenWithAccountAndInstrument(accs, List(instrument).map(_.isinCode))
+      )
+      mkt          <- Gen.fromIterable(Market.values)
+      brkAccountNo <- Gen.fromIterable(accs)
+    } yield GenerateTradeFrontOfficeInput(
+      NonEmptyList(orders.head, orders.tail: _*),
+      mkt,
+      brkAccountNo,
+      NonEmptyList(accs.head, accs.tail: _*)
+    )
+  }
+
+  def tradeGenerationInputGen = for {
     a <- accountGen
     i <- isinGen
     u <- userIdGen

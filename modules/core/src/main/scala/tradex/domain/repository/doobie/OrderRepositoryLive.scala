@@ -18,6 +18,7 @@ import model.order._
 import model.instrument._
 import repository.OrderRepository
 import cats.effect.kernel.Resource
+import java.time.ZonedDateTime
 
 final case class OrderRepositoryLive(xaResource: Resource[Task, Transactor[Task]]) extends OrderRepository {
   import OrderRepositoryLive.SQL
@@ -76,6 +77,15 @@ final case class OrderRepositoryLive(xaResource: Resource[Task, Transactor[Task]
 
   def store(orders: NonEmptyList[Order]): Task[Unit] =
     orders.forEach(order => store(order)).map(_ => ())
+
+  def deleteAll: Task[Unit] =
+    xaResource.use { xa =>
+      (SQL.deleteAllLineItems.run
+        .transact(xa) *> SQL.deleteAllOrders.run
+        .transact(xa))
+        .map(_ => ())
+        .orDie
+    }
 }
 
 object OrderRepositoryLive extends CatzInterop {
@@ -108,7 +118,7 @@ object OrderRepositoryLive extends CatzInterop {
             unitPrice,
             buySellFlag
           )
-        VALUES ( ?, ?, ?, ?, ? )
+        VALUES ( ?, ?, ?, ?, ?::buySell )
        """
       Update[LineItem](sql).updateMany(lis)
     }
@@ -120,7 +130,7 @@ object OrderRepositoryLive extends CatzInterop {
         (
             OrderNo,
             AccountNo,
-            LocalDateTime
+            ZonedDateTime
         )
       ].contramap(order =>
         (
@@ -159,7 +169,7 @@ object OrderRepositoryLive extends CatzInterop {
       Read[
         (
             String,
-            LocalDateTime,
+            ZonedDateTime,
             String,
             String,
             BigDecimal,
@@ -194,6 +204,14 @@ object OrderRepositoryLive extends CatzInterop {
     def deleteLineItems(orderNo: String): Update0 =
       sql""" 
         DELETE FROM lineItems l WHERE l.orderNo = $orderNo
+      """.update
+
+    def deleteAllLineItems: Update0 = sql"""
+      delete from lineItems
+      """.update
+
+    def deleteAllOrders: Update0 = sql"""
+      delete from orders
       """.update
   }
 }

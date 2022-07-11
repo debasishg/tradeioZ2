@@ -13,7 +13,7 @@ lazy val root = (project in file("."))
   .settings(
     name := "tradeioz2"
   )
-  .aggregate(core, tests)
+  .aggregate(core, tests, it)
 
 lazy val core = (project in file("modules/core")).settings(
   name := "tradeioz2-core",
@@ -23,14 +23,23 @@ lazy val core = (project in file("modules/core")).settings(
 )
 
 lazy val tests = (project in file("modules/tests"))
-  // .configs(IntegrationTest)
   .settings(
     name := "tradeioz2-test-suite",
     commonSettings,
-    testFrameworks := Seq(new TestFramework("zio.test.sbt.ZTestFramework")),
-    Defaults.itSettings,
-    // scalafixCommonSettings,
+    // testFrameworks := Seq(new TestFramework("zio.test.sbt.ZTestFramework")),
+    // Defaults.itSettings,
     testDependencies
+  )
+  .dependsOn(core)
+
+lazy val it = (project in file("modules/it"))
+  .settings(commonSettings:_*)
+  .configs(IntegrationTest)
+  .settings(
+    name := "tradeioz2-it-suite",
+    // testFrameworks := Seq(new TestFramework("zio.test.sbt.ZTestFramework")),
+    Defaults.itSettings,
+    itDependencies
   )
   .dependsOn(core)
 
@@ -68,4 +77,7 @@ lazy val dependencies =
   libraryDependencies ++= Dependencies.tradeioDependencies
 
 lazy val testDependencies =
+  libraryDependencies ++= Dependencies.testDependencies
+
+lazy val itDependencies =
   libraryDependencies ++= Dependencies.testDependencies

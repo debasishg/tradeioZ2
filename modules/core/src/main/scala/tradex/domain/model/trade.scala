@@ -1,7 +1,6 @@
 package tradex.domain
 package model
 
-import java.time.LocalDateTime
 import java.util.UUID
 
 import zio.prelude._
@@ -18,6 +17,7 @@ import user.UserId
 import io.estatico.newtype.macros.newtype
 import derevo.circe.magnolia._
 import derevo.derive
+import java.time.ZonedDateTime
 
 object trade {
   @derive(decoder, encoder)
@@ -97,8 +97,8 @@ object trade {
       buySell: BuySell,
       unitPrice: UnitPrice,
       quantity: Quantity,
-      tradeDate: LocalDateTime = today,
-      valueDate: Option[LocalDateTime] = None,
+      tradeDate: ZonedDateTime = today,
+      valueDate: Option[ZonedDateTime] = None,
       userId: Option[UserId] = None,
       taxFees: List[TradeTaxFee] = List.empty,
       netAmount: Option[Money] = None,
@@ -119,8 +119,8 @@ object trade {
         buySell: BuySell,
         unitPrice: UnitPrice,
         quantity: Quantity,
-        tradeDate: LocalDateTime = today,
-        valueDate: Option[LocalDateTime] = None,
+        tradeDate: ZonedDateTime = today,
+        valueDate: Option[ZonedDateTime] = None,
         userId: Option[UserId] = None
     ): Validation[String, Trade] = {
       validateTradeValueDate(tradeDate, valueDate).map { case (td, maybeVd) =>
@@ -139,9 +139,9 @@ object trade {
     }
 
     private def validateTradeValueDate(
-        td: LocalDateTime,
-        vd: Option[LocalDateTime]
-    ): Validation[String, (LocalDateTime, Option[LocalDateTime])] = {
+        td: ZonedDateTime,
+        vd: Option[ZonedDateTime]
+    ): Validation[String, (ZonedDateTime, Option[ZonedDateTime])] = {
       vd.map { v =>
         if (v.isBefore(td)) Validation.fail(s"Value date $v cannot be earlier than trade date $td")
         else Validation.succeed((td, vd))

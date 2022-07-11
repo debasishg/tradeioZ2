@@ -9,22 +9,25 @@ import model.account._
 
 final case class AccountRepositoryInMemory(state: Ref[Map[AccountNo, Account]]) extends AccountRepository {
 
-  override def queryByAccountNo(no: AccountNo): Task[Option[Account]] = state.get.map(_.get(no))
+  def queryByAccountNo(no: AccountNo): Task[Option[Account]] = state.get.map(_.get(no))
 
-  override def store(a: Account): Task[Account] = state.update(m => m + ((a.no, a))).map(_ => a)
+  def store(a: Account): Task[Account] = state.update(m => m + ((a.no, a))).map(_ => a)
 
-  override def store(as: List[Account]): Task[Unit] = state.update(m => m ++ (as.map(a => (a.no, a))))
+  def store(as: List[Account]): Task[Unit] = state.update(m => m ++ (as.map(a => (a.no, a))))
 
-  override def allOpenedOn(openedOnDate: LocalDate): Task[List[Account]] =
+  def allOpenedOn(openedOnDate: LocalDate): Task[List[Account]] =
     state.get.map(_.values.filter(_.dateOfOpen == openedOnDate).toList)
 
-  override def all: Task[List[Account]] = state.get.map(_.values.toList)
+  def all: Task[List[Account]] = state.get.map(_.values.toList)
 
-  override def allClosed(closeDate: Option[LocalDate]): Task[List[Account]] =
+  def allClosed(closeDate: Option[LocalDate]): Task[List[Account]] =
     state.get.map(_.values.filter(_.dateOfClose.isDefined).toList)
 
-  override def allAccountsOfType(accountType: AccountType): Task[List[Account]] =
+  def allAccountsOfType(accountType: AccountType): Task[List[Account]] =
     state.get.map(_.values.filter(_.accountType == accountType).toList)
+
+  def deleteAll: Task[Unit] =
+    state.update(m => m -- m.keys)
 }
 
 object AccountRepositoryInMemory {

@@ -1,7 +1,6 @@
 package tradex.domain
 package model
 
-import java.time.LocalDateTime
 import zio.prelude._
 
 import squants.market._
@@ -26,6 +25,7 @@ import model.order.UnitPrice
 
 import _root_.shapeless.::
 import _root_.shapeless.HNil
+import java.time.ZonedDateTime
 
 object instrument {
   type ISINCodeString = String Refined AllOf[
@@ -62,8 +62,8 @@ object instrument {
       isinCode: ISINCode,
       name: InstrumentName,
       instrumentType: InstrumentType,
-      dateOfIssue: Option[LocalDateTime],    // for non CCY
-      dateOfMaturity: Option[LocalDateTime], // for Fixed Income
+      dateOfIssue: Option[ZonedDateTime],    // for non CCY
+      dateOfMaturity: Option[ZonedDateTime], // for Fixed Income
       lotSize: LotSize,
       unitPrice: Option[UnitPrice],       // for Equity
       couponRate: Option[Money],          // for Fixed Income
@@ -75,8 +75,8 @@ object instrument {
       isinCode: String,
       name: String,
       instrumentType: InstrumentType,
-      dateOfIssue: Option[LocalDateTime],    // for non CCY
-      dateOfMaturity: Option[LocalDateTime], // for Fixed Income
+      dateOfIssue: Option[ZonedDateTime],    // for non CCY
+      dateOfMaturity: Option[ZonedDateTime], // for Fixed Income
       lotSize: Int,
       unitPrice: Option[BigDecimal],      // for Equity
       couponRate: Option[Money],          // for Fixed Income
@@ -118,12 +118,12 @@ object instrument {
         .mapError(s => s"Unit Price has to be positive: found $price (root cause: $s")
     }
 
-    private[domain] def instrument(
+    def instrument(
         isinCode: String,
         name: String,
         instrumentType: InstrumentType,
-        dateOfIssue: Option[LocalDateTime],    // for non CCY
-        dateOfMaturity: Option[LocalDateTime], // for Fixed Income
+        dateOfIssue: Option[ZonedDateTime],    // for non CCY
+        dateOfMaturity: Option[ZonedDateTime], // for Fixed Income
         lotSize: Option[Int],
         unitPrice: Option[BigDecimal],      // for Equity
         couponRate: Option[Money],          // for Fixed Income
@@ -135,10 +135,10 @@ object instrument {
         fixedIncome(isinCode, name, dateOfIssue, dateOfMaturity, lotSize, couponRate, couponFrequency)
     }
 
-    private[domain] def ccy(
+    def ccy(
         isinCode: String,
         name: String,
-        dateOfIssue: Option[LocalDateTime] // for non CCY
+        dateOfIssue: Option[ZonedDateTime] // for non CCY
     ): Validation[String, Instrument] = {
       Validation.validateWith(
         validateISINCode(isinCode),
@@ -158,11 +158,11 @@ object instrument {
       }
     }
 
-    private[domain] def fixedIncome(
+    def fixedIncome(
         isinCode: String,
         name: String,
-        dateOfIssue: Option[LocalDateTime],    // for non CCY
-        dateOfMaturity: Option[LocalDateTime], // for Fixed Income
+        dateOfIssue: Option[ZonedDateTime],    // for non CCY
+        dateOfMaturity: Option[ZonedDateTime], // for Fixed Income
         lotSize: Option[Int],
         couponRate: Option[Money],          // for Fixed Income
         couponFrequency: Option[BigDecimal] // for Fixed Income
@@ -186,10 +186,10 @@ object instrument {
       }
     }
 
-    private[domain] def equity(
+    def equity(
         isinCode: String,
         name: String,
-        dateOfIssue: Option[LocalDateTime], // for non CCY
+        dateOfIssue: Option[ZonedDateTime], // for non CCY
         lotSize: Option[Int],
         unitPrice: Option[BigDecimal] // for Equity
     ): Validation[String, Instrument] = {

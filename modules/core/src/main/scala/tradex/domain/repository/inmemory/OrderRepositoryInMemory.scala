@@ -15,6 +15,9 @@ final case class OrderRepositoryInMemory(state: Ref[Map[OrderNo, Order]]) extend
   def store(ord: Order): Task[Order] = state.update(m => m + ((ord.no, ord))).map(_ => ord)
 
   def store(orders: NonEmptyList[Order]): Task[Unit] = state.update(m => m ++ (orders.map(order => (order.no, order))))
+
+  def deleteAll: Task[Unit] =
+    state.update(m => m -- m.keys)
 }
 
 object OrderRepositoryInMemory {

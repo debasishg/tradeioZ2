@@ -4,8 +4,8 @@ CREATE TABLE IF NOT EXISTS accounts (
     no varchar NOT NULL PRIMARY KEY,
     name varchar NOT NULL,
     type accountType NOT NULL,
-    dateOfOpen timestamp NOT NULL,
-    dateOfClose timestamp,
+    dateOfOpen timestamp with time zone NOT NULL,
+    dateOfClose timestamp with time zone,
     baseCurrency varchar NOT NULL,
     tradingCurrency varchar,
     settlementCurrency varchar

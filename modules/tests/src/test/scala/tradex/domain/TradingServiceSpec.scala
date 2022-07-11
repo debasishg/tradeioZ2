@@ -26,7 +26,7 @@ object TradingServiceSpec extends ZIOSpecDefault {
         for {
           _   <- TestClock.adjust(1.day)
           now <- zio.Clock.instant
-          dt = LocalDateTime.ofInstant(now, ZoneOffset.UTC)
+          dt = ZonedDateTime.ofInstant(now, ZoneOffset.UTC)
           repo <- ZIO.service[AccountRepository]
           _ <- repo.store(
             accounts.map(_.copy(dateOfOpen = dt))
@@ -53,7 +53,7 @@ object TradingServiceSpec extends ZIOSpecDefault {
             accs <- repo.all
             _    <- TestClock.adjust(1.day)
             now  <- zio.Clock.instant
-            dt                    = LocalDateTime.ofInstant(now, ZoneOffset.UTC)
+            dt                    = ZonedDateTime.ofInstant(now, ZoneOffset.UTC)
             tradesTodayForAccount = trades.map(_.copy(accountNo = accs.head.no, tradeDate = dt))
             _ <- TradeRepository.storeNTrades(
               NonEmptyList(tradesTodayForAccount.head, tradesTodayForAccount.tail: _*)
@@ -78,17 +78,17 @@ object TradingServiceSpec extends ZIOSpecDefault {
     test("successfully generate trades from front office input") {
       check(tradeGnerationInputGen) { case (account, isin, userId) =>
         check(generateTradeFrontOfficeInputGenWithAccountAndInstrument(List(account.no), List(isin))) { foInput =>
-          ZIO.succeed(println(foInput.asJson.printWith(Printer.noSpaces))) *>
-            (for {
-              trading <- ZIO.service[TradingService]
-              trades  <- trading.generateTrade(foInput, userId)
-            } yield assertTrue(
-              trades.size > 0 && trades.forall(trade => trade.accountNo == account.no && trade.isin == isin)
-            ))
+          // ZIO.succeed(println(foInput.asJson.printWith(Printer.noSpaces))) *>
+          (for {
+            trading <- ZIO.service[TradingService]
+            trades  <- trading.generateTrade(foInput, userId)
+          } yield assertTrue(
+            trades.size > 0 && trades.forall(trade => trade.accountNo == account.no && trade.isin == isin)
+          ))
         }
       }
-    }
-  ).provide(TradingServiceTest.layer, TestRandom.deterministic, Sized.default, TestConfig.default)
+    } @@ TestAspect.ignore
+  ).provide(TradingServiceTest.layer, TestRandom.deterministic, Sized.default, TestConfig.default, Annotations.live)
 }
 
 object TradingServiceTest {
