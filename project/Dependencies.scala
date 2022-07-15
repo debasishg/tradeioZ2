@@ -4,17 +4,17 @@ import Versions._
 
 object Dependencies {
   object Zio {
-    val zio            = "dev.zio" %% "zio"              % zioVersion
-    val zioStreams     = "dev.zio" %% "zio-streams"      % zioVersion
-    val zioMacros      = "dev.zio" %% "zio-macros"       % zioVersion
-    val zioPrelude     = "dev.zio" %% "zio-prelude"      % zioPreludeVersion
-    val zioQuery       = "dev.zio" %% "zio-query"        % zioQueryVersion
-    val zioInteropCats = "dev.zio" %% "zio-interop-cats" % zioInteropCatsVersion
-    val zioConfig      = "dev.zio" %% "zio-config"       % zioConfigVersion
+    val zio               = "dev.zio" %% "zio"                 % zioVersion
+    val zioStreams        = "dev.zio" %% "zio-streams"         % zioVersion
+    val zioMacros         = "dev.zio" %% "zio-macros"          % zioVersion
+    val zioPrelude        = "dev.zio" %% "zio-prelude"         % zioPreludeVersion
+    val zioQuery          = "dev.zio" %% "zio-query"           % zioQueryVersion
+    val zioInteropCats    = "dev.zio" %% "zio-interop-cats"    % zioInteropCatsVersion
+    val zioConfig         = "dev.zio" %% "zio-config"          % zioConfigVersion
     val zioConfigTypesafe = "dev.zio" %% "zio-config-typesafe" % zioConfigVersion
     val zioConfigMagnolia = "dev.zio" %% "zio-config-magnolia" % zioConfigVersion
-    val zioTest        = "dev.zio" %% "zio-test"         % zioVersion % "it,test"
-    val zioTestSbt     = "dev.zio" %% "zio-test-sbt"     % zioVersion % "it,test"
+    val zioTest           = "dev.zio" %% "zio-test"            % zioVersion % "it,test"
+    val zioTestSbt        = "dev.zio" %% "zio-test-sbt"        % zioVersion % "it,test"
   }
 
   // Scalafix rules
@@ -88,15 +88,16 @@ object Dependencies {
   import CompilerPlugin._
 
   val commonDependencies: Seq[ModuleID] = Seq(
-    Zio.zio, 
-    Zio.zioConfig, 
-    Zio.zioConfigTypesafe, 
-    Zio.zioConfigMagnolia, 
-    Zio.zioPrelude, 
-    Zio.zioInteropCats, 
-    Zio.zioStreams, 
-    Zio.zioMacros, 
-    Zio.zioQuery)
+    Zio.zio,
+    Zio.zioConfig,
+    Zio.zioConfigTypesafe,
+    Zio.zioConfigMagnolia,
+    Zio.zioPrelude,
+    Zio.zioInteropCats,
+    Zio.zioStreams,
+    Zio.zioMacros,
+    Zio.zioQuery
+  )
 
   val tradeioDependencies: Seq[ModuleID] =
     commonDependencies ++ Seq(kindProjector, betterMonadicFor, semanticDB) ++
