@@ -11,8 +11,6 @@ jobs:
     name: sbt compile
     runs-on: ubuntu-20.04
     env:
-      # define Java options for both official sbt and sbt-extras
-      SBT_OPTS: -XX:+CMSClassUnloadingEnabled -XX:MaxPermSize=2G -Xmx2G -Xms1G
       JAVA_OPTS: -Xms2048M -Xmx2048M -Xss6M -XX:ReservedCodeCacheSize=256M -Dfile.encoding=UTF-8
       JVM_OPTS:  -Xms2048M -Xmx2048M -Xss6M -XX:ReservedCodeCacheSize=256M -Dfile.encoding=UTF-8
     steps:
