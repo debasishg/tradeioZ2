@@ -24,6 +24,7 @@ lazy val core = (project in file("modules/core")).settings(
 
 lazy val tests = (project in file("modules/tests"))
   .settings(commonSettings:_*)
+  .configs(IntegrationTest)
   .settings(
     name := "tradeioz2-test-suite",
     testFrameworks := Seq(new TestFramework("zio.test.sbt.ZTestFramework")),
