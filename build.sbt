@@ -37,7 +37,7 @@ lazy val it = (project in file("modules/it"))
   .configs(IntegrationTest)
   .settings(
     name := "tradeioz2-it-suite",
-    // testFrameworks := Seq(new TestFramework("zio.test.sbt.ZTestFramework")),
+    testFrameworks := Seq(new TestFramework("zio.test.sbt.ZTestFramework")),
     Defaults.itSettings,
     itDependencies
   )

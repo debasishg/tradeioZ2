@@ -90,6 +90,11 @@ object generators {
   def accountGen: Gen[Random with Sized, Account] =
     Gen.oneOf(tradingAccountGen, settlementAccountGen, bothAccountGen)
 
+  val instrumentNameGen: Gen[Random with Sized, InstrumentName] =
+    nonEmptyStringGen
+      .map(s => validate[InstrumentName](s))
+      .map(_.fold(errs => throw new Exception(errs.toString), identity))
+
   def isinGen: Gen[Any, ISINCode] = {
     val appleISINStr = "US0378331005"
     val baeISINStr   = "GB0002634946"
@@ -125,6 +130,14 @@ object generators {
           .fold(err => throw new Exception(err), identity)
       )
     Gen.fromIterable(qtys)
+  }
+
+  val equityGen: Gen[Random with Sized, Instrument] = {
+    for {
+      isin <- isinGen
+      name <- instrumentNameGen
+      up   <- unitPriceGen
+    } yield Instrument(isin, name, InstrumentType.Equity, Some(today), None, LotSize(10), Some(up), None, None)
   }
 
   val userIdGen: Gen[Random, UserId] = Gen.uuid.map(UserId(_))

@@ -69,26 +69,14 @@ object TradingServiceSpec {
           os.size > 0
         )
       }
-    },
-    test("successfully generate trades from front office input") {
-      check(tradeGnerationInputGen) { case (account, isin, userId) =>
-        check(generateTradeFrontOfficeInputGenWithAccountAndInstrument(List(account.no), List(isin))) { foInput =>
-          (for {
-            trading <- ZIO.service[TradingService]
-            trades  <- trading.generateTrade(foInput, userId)
-          } yield assertTrue(
-            trades.size > 0 && trades.forall(trade => trade.accountNo == account.no && trade.isin == isin)
-          ))
-        }
-      }
-    } @@ TestAspect.ignore
+    }
   ).provide(
     TradingServiceTest.layer,
     TestRandom.deterministic,
     Sized.default,
-    TestConfig.default,
-    Annotations.live
+    TestConfig.default
   )
+
 }
 
 object TradingServiceTest {
