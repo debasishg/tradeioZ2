@@ -1,10 +1,9 @@
 package tradex.domain
 
-import zio._
+import zio.{ test => ztest, _ }
 import zio.prelude._
 import zio.test._
 import zio.test.Assertion._
-import zio.test.TestClock
 
 import generators._
 import repository._
@@ -13,11 +12,7 @@ import repository.inmemory._
 import services.trading._
 import java.time._
 
-import io.circe._
-import io.circe.generic.auto._
-import io.circe.syntax._
-
-object TradingServiceSpec extends ZIOSpecDefault {
+object TradingServiceSpec {
   val localDateZERO = LocalDateTime.ofEpochSecond(0, 0, ZoneOffset.UTC)
 
   val spec = suite("Trading Service")(
@@ -78,7 +73,6 @@ object TradingServiceSpec extends ZIOSpecDefault {
     test("successfully generate trades from front office input") {
       check(tradeGnerationInputGen) { case (account, isin, userId) =>
         check(generateTradeFrontOfficeInputGenWithAccountAndInstrument(List(account.no), List(isin))) { foInput =>
-          // ZIO.succeed(println(foInput.asJson.printWith(Printer.noSpaces))) *>
           (for {
             trading <- ZIO.service[TradingService]
             trades  <- trading.generateTrade(foInput, userId)
@@ -88,7 +82,13 @@ object TradingServiceSpec extends ZIOSpecDefault {
         }
       }
     } @@ TestAspect.ignore
-  ).provide(TradingServiceTest.layer, TestRandom.deterministic, Sized.default, TestConfig.default, Annotations.live)
+  ).provide(
+    TradingServiceTest.layer,
+    TestRandom.deterministic,
+    Sized.default,
+    TestConfig.default,
+    Annotations.live
+  )
 }
 
 object TradingServiceTest {

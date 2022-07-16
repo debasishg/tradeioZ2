@@ -9,7 +9,7 @@ import repository.AccountRepository
 import repository.inmemory.AccountRepositoryInMemory
 import zio.ZIO
 
-object AccountRepositorySpec extends ZIOSpecDefault {
+object AccountRepositorySpec {
 
   val spec = suite("AccountRepository")(
     test("successfully stores an account") {

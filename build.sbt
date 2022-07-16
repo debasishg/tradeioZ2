@@ -24,11 +24,11 @@ lazy val core = (project in file("modules/core")).settings(
 
 lazy val tests = (project in file("modules/tests"))
   .settings(commonSettings:_*)
-  .configs(IntegrationTest)
+  // .configs(IntegrationTest)
   .settings(
     name := "tradeioz2-test-suite",
-    // testFrameworks := Seq(new TestFramework("zio.test.sbt.ZTestFramework")),
-    Defaults.itSettings,
+    testFrameworks := Seq(new TestFramework("zio.test.sbt.ZTestFramework")),
+    // Defaults.itSettings,
     testDependencies
   )
   .dependsOn(core)
@@ -42,7 +42,7 @@ lazy val it = (project in file("modules/it"))
     Defaults.itSettings,
     itDependencies
   )
-  .dependsOn(core)
+  .dependsOn(core % "it->test")
 
 lazy val commonSettings = Seq(
   scalafmtOnCompile := true,
