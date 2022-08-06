@@ -23,7 +23,7 @@ lazy val core = (project in file("modules/core")).settings(
 )
 
 lazy val tests = (project in file("modules/tests"))
-  .settings(commonSettings:_*)
+  .settings(commonSettings: _*)
   .configs(IntegrationTest)
   .settings(
     name := "tradeioz2-test-suite",
@@ -33,7 +33,7 @@ lazy val tests = (project in file("modules/tests"))
   .dependsOn(core)
 
 lazy val it = (project in file("modules/it"))
-  .settings(commonSettings:_*)
+  .settings(commonSettings: _*)
   .configs(IntegrationTest)
   .settings(
     name := "tradeioz2-it-suite",
