@@ -26,7 +26,7 @@ lazy val tests = (project in file("modules/tests"))
   .settings(commonSettings: _*)
   .configs(IntegrationTest)
   .settings(
-    name := "tradeioz2-test-suite",
+    name           := "tradeioz2-test-suite",
     testFrameworks := Seq(new TestFramework("zio.test.sbt.ZTestFramework")),
     testDependencies
   )
@@ -36,7 +36,7 @@ lazy val it = (project in file("modules/it"))
   .settings(commonSettings: _*)
   .configs(IntegrationTest)
   .settings(
-    name := "tradeioz2-it-suite",
+    name           := "tradeioz2-it-suite",
     testFrameworks := Seq(new TestFramework("zio.test.sbt.ZTestFramework")),
     Defaults.itSettings,
     itDependencies
