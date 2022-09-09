@@ -43,7 +43,6 @@ object AccountRepositorySpec {
   ).provide(
     AccountRepositoryInMemory.layer,
     TestRandom.deterministic,
-    Sized.default,
-    TestConfig.default
+    Sized.default
   )
 }

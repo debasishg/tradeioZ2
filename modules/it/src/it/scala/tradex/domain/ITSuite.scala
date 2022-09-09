@@ -21,7 +21,6 @@ object ITSuite extends ZIOSpecDefault {
     TestRandom.deterministic,
     AccountRepositoryLive.layer,
     InstrumentRepositoryLive.layer,
-    TestConfig.default,
     TradingServiceLive.layer,
     OrderRepositoryLive.layer,
     TradeRepositoryLive.layer,

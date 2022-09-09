@@ -8,6 +8,7 @@ import tradex.domain.config._
 import services.trading.TradingService
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
+import zio.logging.backend.SLF4J
 
 object TradingEngine extends ZIOAppDefault {
 
@@ -19,8 +20,9 @@ object TradingEngine extends ZIOAppDefault {
 
     val dt = LocalDate.parse("2019-06-22", DateTimeFormatter.ofPattern("yyyy-MM-dd"))
 
-    ZIO
-      .serviceWithZIO[TradingService](service => setupDB *> service.getAccountsOpenedOn(dt).map(_.foreach(println)))
-      .provide(Application.prod.appLayer)
+    ZIO.logInfo("Starting trading engine") @@ SLF4J.loggerName("tradex.domain.TradingEngine") *>
+      ZIO
+        .serviceWithZIO[TradingService](service => setupDB *> service.getAccountsOpenedOn(dt).map(_.foreach(println)))
+        .provide(Application.prod.appLayer)
   }
 }
