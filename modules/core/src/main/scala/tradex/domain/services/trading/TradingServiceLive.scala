@@ -55,12 +55,19 @@ final case class TradingServiceLive(
       Order
         .create(frontOfficeOrders)
         .fold(
-          errs => ZIO.fail(OrderingError(errs.toList.mkString("/"))),
+          errs =>
+            ZIO
+              .fail(OrderingError(errs.toList.mkString("/")))
+              .tapErrorCause(error => ZIO.logErrorCause(s"Failed Orders for $frontOfficeOrders", error)),
           orders => {
             NonEmptyList
               .fromIterableOption(orders)
               .map(os => (persistOrders(os) *> ZIO.succeed(os)))
-              .getOrElse(ZIO.fail(OrderingError("Empty order list encountered")))
+              .getOrElse(
+                ZIO
+                  .fail(OrderingError("Empty order list encountered"))
+                  .tapErrorCause(error => ZIO.logErrorCause(s"Failed Orders for $frontOfficeOrders", error))
+              )
           }
         )
     )
@@ -126,7 +133,13 @@ final case class TradingServiceLive(
               None,
               userId = Some(userId)
             )
-            .fold(errs => ZIO.fail(AllocationError(errs.toList.mkString("/"))), ZIO.succeed(_))
+            .fold(
+              errs =>
+                ZIO
+                  .fail(AllocationError(errs.toList.mkString("/")))
+                  .tapErrorCause(error => ZIO.logErrorCause(s"Failed allocation:", error)),
+              ZIO.succeed(_)
+            )
         }
         tradesWithTaxFee = tradesNoTaxFee.map(t => Trade.withTaxFee(t))
         _         <- persistTrades(tradesWithTaxFee)
@@ -145,14 +158,17 @@ final case class TradingServiceLive(
   private def persistOrders(orders: NonEmptyList[Order]): IO[OrderingError, Unit] =
     or.store(orders)
       .mapError(th => OrderingError(th.getMessage))
+      .tapErrorCause(error => ZIO.logErrorCause(s"Failed persistence for orders:", error))
 
   private def persistExecutions(executions: NonEmptyList[Execution]): IO[ExecutionError, Unit] =
     er.storeMany(executions)
       .mapError(th => ExecutionError(th.getMessage))
+      .tapErrorCause(error => ZIO.logErrorCause(s"Failed persistence for executions:", error))
 
   private def persistTrades(trades: NonEmptyList[Trade]): IO[TradingError, Unit] =
     tr.storeNTrades(trades)
       .mapError(th => TradeGenerationError(th.getMessage))
+      .tapErrorCause(error => ZIO.logErrorCause(s"Failed persistence for trades:", error))
 }
 
 object TradingServiceLive {

@@ -73,8 +73,7 @@ object TradingServiceSpec {
   ).provide(
     TradingServiceTest.layer,
     TestRandom.deterministic,
-    Sized.default,
-    TestConfig.default
+    Sized.default
   )
 
 }
