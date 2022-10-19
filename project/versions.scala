@@ -4,7 +4,7 @@ object Versions {
   val catsMtlVersion          = "1.2.0"
   val macroParadiseVersion    = "2.1.1"
   val kindProjectorVersion    = "0.13.2"
-  val scalaVersion            = "2.13.8"
+  val scalaVersion            = "2.13.10"
   val silencerVersion         = "1.4.4"
   val log4j2Version           = "2.13.1"
   val pureconfigVersion       = "0.17.1"
