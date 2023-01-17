@@ -29,7 +29,7 @@ object Versions {
   val weaverVersion           = "0.7.7"
   val betterMonadicForVersion = "0.3.1"
   val semanticDBVersion       = "4.5.13"
-  val zioVersion              = "2.0.2"
+  val zioVersion              = "2.0.6"
   val zioPreludeVersion       = "1.0.0-RC15"
   val zioConfigVersion        = "3.0.2"
   val zioInteropCatsVersion   = "3.3.0"
