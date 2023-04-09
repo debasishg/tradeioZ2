@@ -39,5 +39,5 @@ object Versions {
   val zioKafkaVersion         = "2.0.2"
   val zioJsonVersion          = "0.1.5"
   val zioQueryVersion         = "0.3.1"
-  val zioLoggingVersion       = "2.1.0"
+  val zioLoggingVersion       = "2.1.12"
 }
